@@ -36,6 +36,18 @@ export interface Holiday {
   created_at: string
 }
 
+export interface Task {
+  id: string
+  user_id: string
+  task_date: string // 'YYYY-MM-DD'
+  title: string
+  notes: string | null
+  completed: boolean
+  completed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 /** Resolved status of a single calendar day, used for rendering. */
 export type DayKind =
   | 'present'
@@ -56,6 +68,15 @@ export interface DayInfo {
   isWeekend: boolean
   isToday: boolean
   isFuture: boolean
+}
+
+/** Payload for editing/creating a single day's attendance from the UI. */
+export interface AttendanceEditInput {
+  status: AttendanceStatus
+  punchIn: string | null // ISO timestamp or null
+  punchOut: string | null // ISO timestamp or null
+  leaveType: LeaveType | null
+  notes: string | null
 }
 
 export interface MonthStats {

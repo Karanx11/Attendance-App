@@ -96,6 +96,22 @@ export function monthLabel(year: number, month: number): string {
   return `${MONTHS[month]} ${year}`
 }
 
+/** Full weekday name from a date key, e.g. "Monday". */
+export function formatWeekday(key: string): string {
+  return WEEKDAYS[fromDateKey(key).getDay()]
+}
+
+/** Month + year from a date key, e.g. "July 2026". */
+export function formatMonthName(key: string): string {
+  const d = fromDateKey(key)
+  return `${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+}
+
+/** ISO date key as-is 'YYYY-MM-DD' (kept for clarity in exports). */
+export function isoDate(key: string): string {
+  return key
+}
+
 /** Local time like "09:08 AM" from an ISO timestamp. */
 export function formatTime(iso: string | null): string {
   if (!iso) return '--:--'
@@ -131,6 +147,21 @@ export function formatTimeFromMinutes(minutes: number | null): string {
   h = h % 12
   if (h === 0) h = 12
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+/** 'HH:MM' (local, 24h) for an ISO timestamp — for <input type="time"> values. */
+export function toTimeInput(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+/** Combine a 'YYYY-MM-DD' key and 'HH:MM' local time into an ISO timestamp. */
+export function combineDateTime(dateKey: string, hhmm: string): string | null {
+  if (!hhmm) return null
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const [hh, mm] = hhmm.split(':').map(Number)
+  return new Date(y, m - 1, d, hh, mm, 0, 0).toISOString()
 }
 
 export function greeting(d: Date = new Date()): string {

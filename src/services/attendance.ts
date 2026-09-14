@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type {
+  AttendanceEditInput,
   AttendanceRecord,
   AttendanceStatus,
   Holiday,
@@ -261,6 +262,82 @@ export async function markLeave(
     .single()
   if (error) throw error
   return data as AttendanceRecord
+}
+
+/**
+ * Create or edit a single day's attendance from the UI (status + editable
+ * punch in/out times). Recomputes total_minutes from the timestamps.
+ */
+export async function saveAttendanceEdit(
+  userId: string,
+  date: string,
+  edit: AttendanceEditInput
+): Promise<AttendanceRecord> {
+  const row: Record<string, unknown> = {
+    user_id: userId,
+    attendance_date: date,
+    status: edit.status,
+    notes: edit.notes,
+  }
+
+  if (edit.status === 'Leave') {
+    row.leave_type = edit.leaveType
+    row.punch_in = null
+    row.punch_out = null
+    row.total_minutes = null
+  } else {
+    row.leave_type = null
+    row.punch_in = edit.punchIn
+    row.punch_out = edit.punchOut
+    if (edit.punchIn && edit.punchOut) {
+      if (new Date(edit.punchOut).getTime() < new Date(edit.punchIn).getTime()) {
+        throw new Error('Punch out cannot be before punch in.')
+      }
+      row.total_minutes = calcTotalMinutes(edit.punchIn, edit.punchOut)
+    } else {
+      row.total_minutes = null
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('attendance')
+    .upsert(row, { onConflict: 'user_id,attendance_date' })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data as AttendanceRecord
+}
+
+/**
+ * Bulk-insert historical attendance. Uses ignoreDuplicates so it never
+ * overwrites a day you have already recorded (e.g. today's punch-in).
+ * Returns how many new days were inserted.
+ */
+export async function bulkImportAttendance(
+  userId: string,
+  rows: {
+    date: string
+    status: AttendanceStatus
+    leaveType?: LeaveType | null
+    notes?: string | null
+  }[]
+): Promise<number> {
+  const payload = rows.map((r) => ({
+    user_id: userId,
+    attendance_date: r.date,
+    status: r.status,
+    leave_type: r.leaveType ?? null,
+    notes: r.notes ?? null,
+  }))
+  const { data, error } = await supabase
+    .from('attendance')
+    .upsert(payload, {
+      onConflict: 'user_id,attendance_date',
+      ignoreDuplicates: true,
+    })
+    .select('attendance_date')
+  if (error) throw error
+  return data?.length ?? 0
 }
 
 /** Remove an attendance record entirely (e.g. clear a mistaken mark). */
