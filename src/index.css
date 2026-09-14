@@ -17,19 +17,54 @@ body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
   color: #0f172a;
-  /* Soft blue → white ambient background */
+  background-color: #eff6ff;
+}
+
+/*
+ * Ambient gradient on a single fixed, GPU-composited layer instead of
+ * `background-attachment: fixed`, which repaints on every scroll frame and is
+ * the main cause of scroll jank on mobile.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-color: #eff6ff;
   background-image:
     radial-gradient(at 15% 0%, rgba(96, 165, 250, 0.18) 0px, transparent 55%),
     radial-gradient(at 85% 10%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
     radial-gradient(at 50% 100%, rgba(147, 197, 253, 0.14) 0px, transparent 55%);
-  background-attachment: fixed;
 }
 
 /* Respect device safe areas (notches / home indicators) */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/*
+ * Performance: backdrop-blur is very expensive on mobile GPUs, and this UI
+ * stacks it on many cards + the fixed nav. Below the desktop breakpoint we drop
+ * the blur and raise the card opacity so the glass look is preserved cheaply.
+ */
+@media (max-width: 1023px) {
+  .backdrop-blur-xl,
+  .backdrop-blur-lg,
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.92);
+  }
+  .glass-card-soft {
+    background-color: rgba(255, 255, 255, 0.86);
+  }
 }
 
 @layer components {

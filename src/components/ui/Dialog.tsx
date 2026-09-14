@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface DialogProps {
@@ -30,7 +31,10 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
 
   if (!open) return null
 
-  return (
+  // Portal to <body> so `position: fixed` is always relative to the viewport —
+  // not to an ancestor with backdrop-filter/transform/filter, which would
+  // otherwise become the containing block and mis-position the dialog.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
       role="dialog"
@@ -81,6 +85,7 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
