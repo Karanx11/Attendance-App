@@ -64,9 +64,22 @@ export function Dialog({ open, onClose, title, children, footer }: DialogProps) 
         <div className="flex-1 overflow-y-auto px-5 pb-2">{children}</div>
 
         {footer && (
-          <div className="border-t border-slate-100 px-5 py-4 pb-safe">{footer}</div>
+          <div
+            className="border-t border-slate-100 px-5 pt-4"
+            style={{
+              paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))',
+            }}
+          >
+            {footer}
+          </div>
         )}
-        {!footer && <div className="pb-safe" />}
+        {!footer && (
+          <div
+            style={{
+              paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+            }}
+          />
+        )}
       </div>
     </div>
   )
