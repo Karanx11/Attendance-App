@@ -99,28 +99,37 @@ export function CalendarPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Present" value={loading ? '—' : stats.present} accent="text-green-600" iconBg="bg-green-50" />
-        <StatCard label="WFH" value={loading ? '—' : stats.wfh} accent="text-brand-600" iconBg="bg-brand-50" />
-        <StatCard label="Leave" value={loading ? '—' : stats.leave} accent="text-[#800000]" iconBg="bg-[#800000]/10" />
-        <StatCard label="Absent" value={loading ? '—' : stats.absent} accent="text-amber-600" iconBg="bg-amber-50" />
-      </div>
+      {/* Mobile: stats on top, calendar below. Desktop: calendar left, stats side. */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Stats */}
+        <div className="lg:order-2 lg:col-span-1">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+            <StatCard label="Present" value={loading ? '—' : stats.present} accent="text-green-600" iconBg="bg-green-50" />
+            <StatCard label="WFH" value={loading ? '—' : stats.wfh} accent="text-brand-600" iconBg="bg-brand-50" />
+            <StatCard label="Leave" value={loading ? '—' : stats.leave} accent="text-[#800000]" iconBg="bg-[#800000]/10" />
+            <StatCard label="Absent" value={loading ? '—' : stats.absent} accent="text-amber-600" iconBg="bg-amber-50" />
+          </div>
+        </div>
 
-      <div className="glass-card p-4 sm:p-6">
-        {loading ? (
-          <Skeleton className="h-96 w-full" />
-        ) : (
-          <AttendanceCalendar
-            year={year}
-            month={month}
-            dayInfos={dayInfos}
-            onSelectDate={(date) =>
-              setSelected(dayInfos.find((d) => d.date === date) ?? null)
-            }
-            onPrevMonth={prevMonth}
-            onNextMonth={nextMonth}
-          />
-        )}
+        {/* Calendar */}
+        <div className="lg:order-1 lg:col-span-2">
+          <div className="glass-card p-4 sm:p-6">
+            {loading ? (
+              <Skeleton className="h-96 w-full" />
+            ) : (
+              <AttendanceCalendar
+                year={year}
+                month={month}
+                dayInfos={dayInfos}
+                onSelectDate={(date) =>
+                  setSelected(dayInfos.find((d) => d.date === date) ?? null)
+                }
+                onPrevMonth={prevMonth}
+                onNextMonth={nextMonth}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <DateDetails
