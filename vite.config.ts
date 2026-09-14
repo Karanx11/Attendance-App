@@ -16,7 +16,7 @@ export default defineConfig({
       },
       includeAssets: ['apple-touch-icon.png', 'favicon-64.png'],
       manifest: {
-        name: 'Attendance — Personal Tracker',
+        name: 'Attendance App',
         short_name: 'Attendance',
         description: 'Personal attendance tracker: punch in/out, WFH, leave, tasks.',
         theme_color: '#eff6ff',
