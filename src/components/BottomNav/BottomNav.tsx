@@ -4,7 +4,7 @@ import { NAV_ITEMS } from '../nav/navItems'
 /** Fixed bottom navigation, shown only below the lg breakpoint. */
 export function BottomNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/60 bg-white/80 backdrop-blur-xl pb-safe lg:hidden">
+    <nav className="glass-nav fixed inset-x-0 bottom-0 z-30 pb-safe lg:hidden">
       <div className="mx-auto grid max-w-lg grid-cols-5">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
