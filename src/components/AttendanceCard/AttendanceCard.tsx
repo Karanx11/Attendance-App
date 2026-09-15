@@ -1,5 +1,15 @@
-import { useState } from 'react'
-import { Building2, LogIn, LogOut, Pencil, Plane, Laptop, Timer } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import {
+  Building2,
+  CheckCircle2,
+  Clock,
+  LogIn,
+  LogOut,
+  Pencil,
+  Plane,
+  Laptop,
+  Timer,
+} from 'lucide-react'
 import type { AttendanceRecord } from '@/types'
 import { Dialog } from '../ui/Dialog'
 import { Spinner } from '../ui/Skeleton'
@@ -37,10 +47,34 @@ export function AttendanceCard({
   const [savingTime, setSavingTime] = useState(false)
   const [timeErr, setTimeErr] = useState<string | null>(null)
 
+  // Tick every 30s while working so the elapsed time and the "you can leave"
+  // hint stay current without needing a refetch.
+  const [, setTick] = useState(0)
+  const working = punchedIn && !punchedOut
+  useEffect(() => {
+    if (!working) return
+    const id = window.setInterval(() => setTick((t) => t + 1), 30_000)
+    return () => window.clearInterval(id)
+  }, [working])
+
   const liveMinutes =
     punchedIn && !punchedOut && record?.punch_in
       ? calcTotalMinutes(record.punch_in, new Date().toISOString())
       : record?.total_minutes ?? null
+
+  // Standard 8-hour workday: when can you leave the office?
+  const STANDARD_WORK_MINUTES = 8 * 60
+  const leaveInfo = (() => {
+    if (!working || !record?.punch_in) return null
+    const leaveMs =
+      new Date(record.punch_in).getTime() + STANDARD_WORK_MINUTES * 60_000
+    const remainingMin = Math.max(0, Math.round((leaveMs - Date.now()) / 60_000))
+    return {
+      leaveIso: new Date(leaveMs).toISOString(),
+      remainingMin,
+      done: Date.now() >= leaveMs,
+    }
+  })()
 
   const openEdit = (field: 'in' | 'out') => {
     if (!record) return
@@ -175,6 +209,31 @@ export function AttendanceCard({
                 {formatDuration(liveMinutes)}
               </span>
             </div>
+          )}
+
+          {/* 8-hour completion hint */}
+          {leaveInfo && (
+            leaveInfo.done ? (
+              <div className="mb-4 flex items-center gap-2 rounded-2xl bg-green-50 px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                <p className="text-sm font-semibold text-green-700">
+                  8 hours complete — you can leave the office now.
+                </p>
+              </div>
+            ) : (
+              <div className="mb-4 flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3">
+                <Clock className="h-5 w-5 shrink-0 text-amber-600" />
+                <p className="text-sm font-medium text-slate-600">
+                  You can leave after{' '}
+                  <span className="font-bold text-amber-700">
+                    {formatTime(leaveInfo.leaveIso)}
+                  </span>{' '}
+                  <span className="text-slate-400">
+                    ({formatDuration(leaveInfo.remainingMin)} to go)
+                  </span>
+                </p>
+              </div>
+            )
           )}
 
           {!punchedIn && (
