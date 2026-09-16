@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRangeData } from '@/hooks/useRangeData'
 import { useToast } from '@/components/Toast/ToastProvider'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
+import { YearHeatmap } from '@/components/YearHeatmap/YearHeatmap'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
 import { StatCard } from '@/components/StatCard/StatCard'
@@ -26,6 +27,11 @@ export function CalendarPage() {
 
   const { start, end } = useMemo(() => monthRange(year, month), [year, month])
   const { recordsByDate, dayInfos, stats, loading, refetch } = useRangeData(start, end)
+
+  // Whole-year data for the heatmap below the calendar.
+  const yearStart = `${year}-01-01`
+  const yearEnd = `${year}-12-31`
+  const yearData = useRangeData(yearStart, yearEnd)
 
   const [selected, setSelected] = useState<DayInfo | null>(null)
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -55,7 +61,7 @@ export function CalendarPage() {
     if (!user || !leaveDate) return
     try {
       await markLeave(user.id, leaveDate, type, notes || null)
-      await refetch()
+      await Promise.all([refetch(), yearData.refetch()])
       toast.success('Leave saved.')
       setLeaveOpen(false)
     } catch (e) {
@@ -66,7 +72,7 @@ export function CalendarPage() {
   const handleSaveEdit = async (date: string, edit: AttendanceEditInput) => {
     if (!user) return
     await saveAttendanceEdit(user.id, date, edit)
-    await refetch()
+    await Promise.all([refetch(), yearData.refetch()])
     toast.success('Attendance updated.')
     setSelected(null)
   }
@@ -76,7 +82,7 @@ export function CalendarPage() {
     setBusy(true)
     try {
       await deleteAttendance(user.id, day.record.id)
-      await refetch()
+      await Promise.all([refetch(), yearData.refetch()])
       toast.success('Record cleared.')
       setSelected(null)
     } catch (e) {
@@ -130,6 +136,24 @@ export function CalendarPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Year-at-a-glance heatmap */}
+      <div className="glass-card p-4 sm:p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-bold text-slate-800">{year} overview</h3>
+        </div>
+        {yearData.loading ? (
+          <Skeleton className="h-28 w-full" />
+        ) : (
+          <YearHeatmap
+            year={year}
+            dayInfos={yearData.dayInfos}
+            onSelectDate={(date) =>
+              setSelected(yearData.dayInfos.find((d) => d.date === date) ?? null)
+            }
+          />
+        )}
       </div>
 
       <DateDetails

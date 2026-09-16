@@ -7,10 +7,14 @@ import {
   CheckCircle2,
   Download,
   LogOut,
+  Monitor,
+  Moon,
+  Palette,
   RefreshCw,
   Save,
   Share as ShareIcon,
   Smartphone,
+  Sun,
   Upload,
   User as UserIcon,
 } from 'lucide-react'
@@ -37,6 +41,8 @@ import {
   setReminderTime,
 } from '@/utils/reminder'
 import { useInstallPrompt } from '@/hooks/useInstallPrompt'
+import { useTheme } from '@/contexts/ThemeContext'
+import type { Theme } from '@/utils/theme'
 import {
   pushConfigured,
   subscribeToPush,
@@ -78,6 +84,7 @@ export function Settings() {
   const { profile, workingDays, save, refresh } = useProfile()
   const toast = useToast()
   const install = useInstallPrompt()
+  const { theme, setTheme } = useTheme()
 
   const [name, setName] = useState('')
   const [days, setDays] = useState<number[]>(workingDays)
@@ -277,6 +284,37 @@ export function Settings() {
           Manage your profile and preferences.
         </p>
       </header>
+
+      {/* Appearance */}
+      <Section icon={Palette} title="Appearance">
+        <p className="label">Theme</p>
+        <div className="grid grid-cols-3 gap-2">
+          {(
+            [
+              ['light', 'Light', Sun],
+              ['dark', 'Dark', Moon],
+              ['system', 'System', Monitor],
+            ] as [Theme, string, typeof Sun][]
+          ).map(([value, labelText, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTheme(value)}
+              className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 text-sm font-semibold transition ${
+                theme === value
+                  ? 'border-brand-500 bg-brand-50 text-brand-700'
+                  : 'border-slate-200 bg-white/70 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              {labelText}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-slate-400">
+          System follows your device&apos;s light/dark setting.
+        </p>
+      </Section>
 
       {/* Install app */}
       <Section icon={Smartphone} title="Install app">

@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#eff6ff" />
+    <!-- Set the theme before any CSS paints to avoid a flash of the wrong theme -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme') || 'system'
+          var dark =
+            t === 'dark' ||
+            (t === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) {
+            document.documentElement.classList.add('dark')
+            document.documentElement.style.colorScheme = 'dark'
+            var m = document.querySelector('meta[name="theme-color"]')
+            if (m) m.setAttribute('content', '#0b1220')
+          }
+        } catch (e) {}
+      })()
+    </script>
     <!-- iOS home-screen / standalone support -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="/favicon-64.png" />
@@ -72,6 +90,17 @@
       @media (prefers-reduced-motion: reduce) {
         #splash .splash-icon,
         #splash .splash-title { animation: none; }
+      }
+      /* Dark theme splash (class is set by the inline script above before paint) */
+      .dark #splash {
+        background-color: #0b1220;
+        background-image:
+          radial-gradient(at 18% 12%, rgba(37, 99, 235, 0.22) 0, transparent 55%),
+          radial-gradient(at 85% 18%, rgba(30, 64, 175, 0.18) 0, transparent 50%),
+          radial-gradient(at 50% 100%, rgba(30, 58, 138, 0.2) 0, transparent 55%);
+      }
+      .dark #splash .splash-title {
+        color: #f1f5f9;
       }
     </style>
   </head>

@@ -16,6 +16,12 @@ import {
   minutesSinceMidnight,
   todayKey,
 } from './date'
+import { JOINING_DATE } from './config'
+
+/** Days before the joining date have no attendance obligation. */
+function isBeforeJoining(key: string): boolean {
+  return key < JOINING_DATE
+}
 
 /** Working time in whole minutes between two ISO timestamps. */
 export function calcTotalMinutes(punchIn: string, punchOut: string): number {
@@ -59,6 +65,8 @@ export function resolveDayKind(
 
   if (isFutureKey(key)) return 'future'
   if (isTodayKey(key)) return 'today'
+  // Before the joining date there was no obligation → grey, never "absent".
+  if (isBeforeJoining(key)) return 'unmarked'
   if (isPastKey(key)) return 'absent' // past working day, no record
   return 'unmarked'
 }
@@ -109,7 +117,10 @@ export function computeStats(
   for (const key of keys) {
     const record = recordsByDate.get(key)
     const working = isWorkingDay(key, holidays, workingDays)
-    if (working && !isFutureKey(key)) workingDays_++
+    // Days before joining have no obligation — don't count them as working
+    // days or as absences.
+    const countable = working && !isBeforeJoining(key)
+    if (countable && !isFutureKey(key)) workingDays_++
 
     if (record) {
       if (record.status === 'Present') present++
@@ -121,8 +132,9 @@ export function computeStats(
       if (record.total_minutes != null && record.total_minutes > 0) {
         workMinutes.push(record.total_minutes)
       }
-    } else if (working && isPastKey(key)) {
-      // Past working day with no record → absent (weekends/holidays/future excluded)
+    } else if (countable && isPastKey(key)) {
+      // Past working day with no record → absent (weekends/holidays/future/
+      // pre-joining excluded)
       absent++
     }
   }

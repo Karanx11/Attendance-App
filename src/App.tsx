@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { isSupabaseConfigured } from '@/lib/supabase'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProfileProvider } from '@/contexts/ProfileContext'
 import { ToastProvider } from '@/components/Toast/ToastProvider'
@@ -15,11 +16,16 @@ import { Settings } from '@/pages/Settings/Settings'
 
 export default function App() {
   if (!isSupabaseConfigured) {
-    return <ConfigNeeded />
+    return (
+      <ThemeProvider>
+        <ConfigNeeded />
+      </ThemeProvider>
+    )
   }
 
   return (
-    <ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
       <AuthProvider>
         <ProfileProvider>
           <BrowserRouter>
@@ -41,5 +47,6 @@ export default function App() {
         </ProfileProvider>
       </AuthProvider>
     </ToastProvider>
+    </ThemeProvider>
   )
 }
