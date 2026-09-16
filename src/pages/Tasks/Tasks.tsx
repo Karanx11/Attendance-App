@@ -57,6 +57,8 @@ export function Tasks() {
   const [editTitle, setEditTitle] = useState('')
   const [editDate, setEditDate] = useState(todayKey())
   const [savingEdit, setSavingEdit] = useState(false)
+  // Task-details popup
+  const [detailFor, setDetailFor] = useState<Task | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -312,10 +314,122 @@ export function Tasks() {
               onToggle={() => handleToggle(task)}
               onEdit={() => openEdit(task)}
               onDelete={() => handleDelete(task)}
+              onOpenDetails={() => setDetailFor(task)}
             />
           ))}
         </ul>
       )}
+
+      {/* Task details */}
+      <Dialog
+        open={detailFor !== null}
+        onClose={() => setDetailFor(null)}
+        title="Task details"
+        footer={
+          detailFor ? (
+            <div className="flex items-center gap-2">
+              <button
+                className="btn text-red-600 hover:bg-red-50"
+                onClick={() => {
+                  const t = detailFor
+                  setDetailFor(null)
+                  void handleDelete(t)
+                }}
+                aria-label="Delete task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+              <button
+                className="btn-secondary flex-1"
+                onClick={() => {
+                  const t = detailFor
+                  setDetailFor(null)
+                  openEdit(t)
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                className="btn-primary flex-1"
+                onClick={() => {
+                  const t = detailFor
+                  setDetailFor(null)
+                  handleToggle(t)
+                }}
+              >
+                <Check className="h-4 w-4" strokeWidth={3} />
+                {detailFor.completed ? 'Reopen' : 'Complete'}
+              </button>
+            </div>
+          ) : undefined
+        }
+      >
+        {detailFor && (
+          <div className="space-y-3 pb-2">
+            <div>
+              <p className="label">Task</p>
+              <p className="text-base font-semibold text-slate-800">
+                {detailFor.title}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-slate-50/80 px-4">
+              <div className="flex items-center justify-between border-b border-slate-100 py-2.5">
+                <span className="text-sm text-slate-500">Status</span>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    detailFor.completed
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-amber-100 text-amber-600'
+                  }`}
+                >
+                  {detailFor.completed ? 'Completed' : 'Pending'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-slate-100 py-2.5">
+                <span className="text-sm text-slate-500">Date</span>
+                <span className="text-sm font-semibold text-slate-800">
+                  {formatFullDate(detailFor.task_date)}
+                </span>
+              </div>
+              {detailFor.completed && detailFor.completed_at && (
+                <div className="flex items-center justify-between py-2.5">
+                  <span className="text-sm text-slate-500">Completed on</span>
+                  <span className="text-sm font-semibold text-green-700">
+                    {formatFullDate(toDateKey(new Date(detailFor.completed_at)))}
+                  </span>
+                </div>
+              )}
+              {!detailFor.completed &&
+                (isTodayKey(detailFor.task_date) ||
+                  isPastKey(detailFor.task_date)) && (
+                  <div className="flex items-center justify-between py-2.5">
+                    <span className="text-sm text-slate-500">Due</span>
+                    <span
+                      className={`text-sm font-bold ${
+                        isPastKey(detailFor.task_date)
+                          ? 'text-red-600'
+                          : 'text-brand-700'
+                      }`}
+                    >
+                      {isPastKey(detailFor.task_date) ? 'Overdue' : 'Today'}
+                    </span>
+                  </div>
+                )}
+            </div>
+
+            {detailFor.notes && (
+              <div>
+                <p className="label">Notes</p>
+                <p className="rounded-2xl bg-slate-50/80 px-4 py-3 text-sm text-slate-600">
+                  {detailFor.notes}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </Dialog>
 
       {/* Edit task */}
       <Dialog
@@ -424,12 +538,14 @@ function TaskRow({
   onToggle,
   onEdit,
   onDelete,
+  onOpenDetails,
 }: {
   task: Task
   busy: boolean
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onOpenDetails: () => void
 }) {
   const overdue = !task.completed && isPastKey(task.task_date)
   const today = isTodayKey(task.task_date)
@@ -454,8 +570,12 @@ function TaskRow({
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
       </button>
 
-      {/* Title + date */}
-      <div className="min-w-0 flex-1">
+      {/* Title + date — tap to open details */}
+      <button
+        type="button"
+        onClick={onOpenDetails}
+        className="min-w-0 flex-1 rounded-lg text-left"
+      >
         <p
           className={`truncate text-sm font-semibold ${
             task.completed ? 'text-slate-400 line-through' : 'text-slate-800'
@@ -483,7 +603,7 @@ function TaskRow({
             </span>
           )}
         </p>
-      </div>
+      </button>
 
       {/* Actions */}
       {busy ? (
