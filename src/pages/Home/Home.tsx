@@ -16,6 +16,7 @@ import { useToast } from '@/components/Toast/ToastProvider'
 import { AttendanceCard } from '@/components/AttendanceCard/AttendanceCard'
 import { ImportBanner } from '@/components/ImportBanner/ImportBanner'
 import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
+import { LatePunchDialog } from '@/components/LatePunchDialog/LatePunchDialog'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
@@ -152,6 +153,12 @@ export function Home() {
       <ImportBanner onImported={() => void refetch()} />
 
       <PunchReminder
+        eligible={reminderEligible}
+        busy={busy}
+        onPunchIn={handlePunchIn}
+      />
+
+      <LatePunchDialog
         eligible={reminderEligible}
         busy={busy}
         onPunchIn={handlePunchIn}

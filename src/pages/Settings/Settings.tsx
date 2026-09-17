@@ -30,7 +30,12 @@ import { buildCsv, downloadBlob } from '@/utils/report'
 import { buildDayInfos, computeStats, toHolidayMap } from '@/utils/attendance'
 import { getHolidays } from '@/services/attendance'
 import { eachDateKey, todayKey } from '@/utils/date'
-import { getReminderTime, setReminderTime } from '@/utils/reminder'
+import {
+  getLateCutoff,
+  getReminderTime,
+  setLateCutoff,
+  setReminderTime,
+} from '@/utils/reminder'
 import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 import { useTheme } from '@/contexts/ThemeContext'
 import type { Theme } from '@/utils/theme'
@@ -84,6 +89,7 @@ export function Settings() {
   const [importing, setImporting] = useState(false)
   // Reminders
   const [reminderTime, setReminderTimeState] = useState(getReminderTime())
+  const [lateCutoff, setLateCutoffState] = useState(getLateCutoff())
 
   useEffect(() => {
     if (profile) {
@@ -205,6 +211,11 @@ export function Settings() {
   const changeReminderTime = (t: string) => {
     setReminderTimeState(t)
     setReminderTime(t)
+  }
+
+  const changeLateCutoff = (t: string) => {
+    setLateCutoffState(t)
+    setLateCutoff(t)
   }
 
   const sync = async () => {
@@ -398,6 +409,21 @@ export function Settings() {
             <p className="mt-1.5 text-xs text-slate-400">
               After this time on a working day, the Home page shows a nudge if you
               haven&apos;t punched in yet.
+            </p>
+          </div>
+
+          <div>
+            <label className="label" htmlFor="late-cutoff">Late cut‑off</label>
+            <input
+              id="late-cutoff"
+              type="time"
+              className="input sm:w-44"
+              value={lateCutoff}
+              onChange={(e) => changeLateCutoff(e.target.value)}
+            />
+            <p className="mt-1.5 text-xs text-slate-400">
+              If you haven&apos;t punched in by this time, a “You&apos;re late”
+              popup asks you to mark Present — otherwise the day is counted Absent.
             </p>
           </div>
         </div>
