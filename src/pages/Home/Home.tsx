@@ -16,7 +16,6 @@ import { useToast } from '@/components/Toast/ToastProvider'
 import { AttendanceCard } from '@/components/AttendanceCard/AttendanceCard'
 import { ImportBanner } from '@/components/ImportBanner/ImportBanner'
 import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
-import { usePunchInNotification } from '@/hooks/usePunchInNotification'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
@@ -70,8 +69,6 @@ export function Home() {
     isWorkingToday &&
     todayRecord?.status !== 'Leave' &&
     !todayRecord?.punch_in
-
-  usePunchInNotification(() => reminderEligible)
 
   // ── Mutations ────────────────────────────────────────────────────────────
   const run = async (fn: () => Promise<unknown>, ok: string) => {

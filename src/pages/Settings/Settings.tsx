@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   AlarmClock,
-  BellOff,
-  BellRing,
   Building2,
   CheckCircle2,
   Download,
@@ -32,22 +30,10 @@ import { buildCsv, downloadBlob } from '@/utils/report'
 import { buildDayInfos, computeStats, toHolidayMap } from '@/utils/attendance'
 import { getHolidays } from '@/services/attendance'
 import { eachDateKey, todayKey } from '@/utils/date'
-import {
-  getNotifyEnabled,
-  getReminderTime,
-  notificationPermission,
-  notificationsSupported,
-  setNotifyEnabled,
-  setReminderTime,
-} from '@/utils/reminder'
+import { getReminderTime, setReminderTime } from '@/utils/reminder'
 import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 import { useTheme } from '@/contexts/ThemeContext'
 import type { Theme } from '@/utils/theme'
-import {
-  pushConfigured,
-  subscribeToPush,
-  unsubscribeFromPush,
-} from '@/services/push'
 
 const DAYS = [
   { dow: 1, label: 'Monday' },
@@ -98,8 +84,6 @@ export function Settings() {
   const [importing, setImporting] = useState(false)
   // Reminders
   const [reminderTime, setReminderTimeState] = useState(getReminderTime())
-  const [notify, setNotify] = useState(getNotifyEnabled())
-  const [perm, setPerm] = useState(notificationPermission())
 
   useEffect(() => {
     if (profile) {
@@ -221,45 +205,6 @@ export function Settings() {
   const changeReminderTime = (t: string) => {
     setReminderTimeState(t)
     setReminderTime(t)
-  }
-
-  const enableNotifications = async () => {
-    if (!notificationsSupported()) {
-      toast.error('Notifications are not supported in this browser.')
-      return
-    }
-    let p = Notification.permission
-    if (p === 'default') p = await Notification.requestPermission()
-    setPerm(p)
-    if (p === 'granted') {
-      setNotify(true)
-      setNotifyEnabled(true)
-      if (pushConfigured() && user) {
-        try {
-          await subscribeToPush(user.id)
-          toast.success('Reminders on — including when the app is closed.')
-        } catch {
-          toast.success('Reminders on (while the app is open).')
-        }
-      } else {
-        toast.success('Reminders on (while the app is open).')
-      }
-    } else if (p === 'denied') {
-      toast.error('Notifications are blocked. Enable them in your browser settings.')
-    }
-  }
-
-  const disableNotifications = async () => {
-    setNotify(false)
-    setNotifyEnabled(false)
-    if (user) {
-      try {
-        await unsubscribeFromPush(user.id)
-      } catch {
-        /* ignore */
-      }
-    }
-    toast.info('Reminder notifications turned off.')
   }
 
   const sync = async () => {
@@ -451,54 +396,9 @@ export function Settings() {
               onChange={(e) => changeReminderTime(e.target.value)}
             />
             <p className="mt-1.5 text-xs text-slate-400">
-              After this time on a working day, Home shows a nudge if you haven&apos;t
-              punched in.
+              After this time on a working day, the Home page shows a nudge if you
+              haven&apos;t punched in yet.
             </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-100 bg-white/60 p-4">
-            <div className="mb-2 flex items-center gap-2">
-              {notify && perm === 'granted' ? (
-                <BellRing className="h-4 w-4 text-brand-600" />
-              ) : (
-                <BellOff className="h-4 w-4 text-slate-400" />
-              )}
-              <p className="text-sm font-semibold text-slate-700">
-                Browser notification
-              </p>
-              {notify && perm === 'granted' && (
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
-                  On
-                </span>
-              )}
-            </div>
-            <p className="mb-3 text-xs text-slate-400">
-              Sends a reminder at {reminderTime} on working days if you haven&apos;t
-              punched in.{' '}
-              {pushConfigured()
-                ? 'Works even when the app is closed (install the app for best results on your phone).'
-                : 'Fires only while the app is open. To get reminders when the app is closed, set up background push — see supabase/PUSH_SETUP.md.'}
-            </p>
-            {perm === 'unsupported' ? (
-              <p className="text-xs font-medium text-red-500">
-                This browser doesn&apos;t support notifications.
-              </p>
-            ) : notify && perm === 'granted' ? (
-              <button className="btn-secondary" onClick={disableNotifications}>
-                <BellOff className="h-4 w-4" />
-                Turn off
-              </button>
-            ) : (
-              <button className="btn-primary" onClick={enableNotifications}>
-                <BellRing className="h-4 w-4" />
-                Enable notifications
-              </button>
-            )}
-            {perm === 'denied' && (
-              <p className="mt-2 text-xs font-medium text-red-500">
-                Notifications are blocked in your browser settings for this site.
-              </p>
-            )}
           </div>
         </div>
       </Section>

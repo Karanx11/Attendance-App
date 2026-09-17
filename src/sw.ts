@@ -1,6 +1,5 @@
 /// <reference lib="webworker" />
-// Custom service worker (injectManifest strategy). Handles offline caching AND
-// background push notifications for punch-in reminders.
+// Custom service worker (injectManifest strategy) for offline caching.
 import { clientsClaim } from 'workbox-core'
 import {
   cleanupOutdatedCaches,
@@ -53,45 +52,3 @@ registerRoute(
   })
 )
 
-// ── Background push ─────────────────────────────────────────────────────────
-self.addEventListener('push', (event) => {
-  let payload: { title?: string; body?: string; url?: string } = {}
-  try {
-    if (event.data) payload = event.data.json()
-  } catch {
-    /* non-JSON payload — use defaults */
-  }
-  const title = payload.title || 'Punch in reminder ⏰'
-  const body =
-    payload.body || "You haven't punched in yet today. Tap to mark your attendance."
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      tag: 'punch-in-reminder',
-      renotify: true,
-      data: { url: payload.url || '/home' },
-    })
-  )
-})
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
-  const target = (event.notification.data?.url as string) || '/home'
-  event.waitUntil(
-    (async () => {
-      const clients = await self.clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true,
-      })
-      for (const client of clients) {
-        if ('focus' in client) {
-          await client.focus()
-          return
-        }
-      }
-      await self.clients.openWindow(target)
-    })()
-  )
-})
