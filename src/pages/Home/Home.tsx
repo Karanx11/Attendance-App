@@ -12,7 +12,7 @@ import type { AttendanceEditInput, DayInfo, LeaveType } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useRangeData } from '@/hooks/useRangeData'
-import { useToast } from '@/components/Toast/ToastProvider'
+import { useAttendanceWrite } from '@/hooks/useAttendanceWrite'
 import { AttendanceCard } from '@/components/AttendanceCard/AttendanceCard'
 import { ImportBanner } from '@/components/ImportBanner/ImportBanner'
 import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
@@ -22,15 +22,6 @@ import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
 import { StatCard } from '@/components/StatCard/StatCard'
 import { Skeleton } from '@/components/ui/Skeleton'
-import {
-  deleteAttendance,
-  friendlyError,
-  markLeave,
-  punchIn,
-  punchOut,
-  saveAttendanceEdit,
-  setTodayMode,
-} from '@/services/attendance'
 import {
   formatDuration,
   formatLongDate,
@@ -43,14 +34,26 @@ import {
 export function Home() {
   const { user } = useAuth()
   const { profile, workingDays } = useProfile()
-  const toast = useToast()
 
   const now = new Date()
   const year = now.getFullYear()
   const month = now.getMonth()
   const { start, end } = useMemo(() => monthRange(year, month), [year, month])
 
-  const { recordsByDate, dayInfos, stats, loading, refetch } = useRangeData(start, end)
+  const {
+    recordsByDate,
+    dayInfos,
+    stats,
+    loading,
+    refetch,
+    upsertLocal,
+    removeLocal,
+  } = useRangeData(start, end)
+  const { saveDay, clearDay } = useAttendanceWrite({
+    upsertLocal,
+    removeLocal,
+    refetch,
+  })
 
   const [busy, setBusy] = useState(false)
   const [selected, setSelected] = useState<DayInfo | null>(null)
@@ -71,31 +74,67 @@ export function Home() {
     todayRecord?.status !== 'Leave' &&
     !todayRecord?.punch_in
 
-  // ── Mutations ────────────────────────────────────────────────────────────
-  const run = async (fn: () => Promise<unknown>, ok: string) => {
+  // ── Mutations (offline-aware via useAttendanceWrite) ──────────────────────
+  const nowIso = () => new Date().toISOString()
+
+  const withBusy = async (fn: () => Promise<void>) => {
     if (busy || !user) return
     setBusy(true)
     try {
       await fn()
-      await refetch()
-      toast.success(ok)
-    } catch (e) {
-      toast.error(friendlyError(e))
     } finally {
       setBusy(false)
     }
   }
 
   const handlePunchIn = () =>
-    run(
-      () => punchIn(user!.id, todayRecord?.status === 'WFH' ? 'WFH' : 'Present'),
-      'Punched in. Have a great day!'
+    void withBusy(() =>
+      saveDay(
+        today,
+        {
+          status: todayRecord?.status === 'WFH' ? 'WFH' : 'Present',
+          punchIn: nowIso(),
+          punchOut: null,
+          leaveType: null,
+          notes: todayRecord?.notes ?? null,
+        },
+        todayRecord,
+        'Punched in. Have a great day!'
+      )
     )
 
-  const handlePunchOut = () => run(() => punchOut(user!.id), 'Punched out. See you!')
+  const handlePunchOut = () =>
+    void withBusy(() => {
+      if (!todayRecord?.punch_in) return Promise.resolve()
+      return saveDay(
+        today,
+        {
+          status: todayRecord.status === 'WFH' ? 'WFH' : 'Present',
+          punchIn: todayRecord.punch_in,
+          punchOut: nowIso(),
+          leaveType: null,
+          notes: todayRecord.notes,
+        },
+        todayRecord,
+        'Punched out. See you!'
+      )
+    })
 
   const handleSetMode = (status: 'Present' | 'WFH') =>
-    run(() => setTodayMode(user!.id, status), `Set to ${status === 'WFH' ? 'WFH' : 'Office'}`)
+    void withBusy(() =>
+      saveDay(
+        today,
+        {
+          status,
+          punchIn: todayRecord?.punch_in ?? null,
+          punchOut: todayRecord?.punch_out ?? null,
+          leaveType: null,
+          notes: todayRecord?.notes ?? null,
+        },
+        todayRecord,
+        `Set to ${status === 'WFH' ? 'WFH' : 'Office'}`
+      )
+    )
 
   const openLeave = (date: string) => {
     setLeaveDate(date)
@@ -104,44 +143,49 @@ export function Home() {
   }
 
   const handleSaveLeave = async (type: LeaveType, notes: string) => {
-    if (!user || !leaveDate) return
-    try {
-      await markLeave(user.id, leaveDate, type, notes || null)
-      await refetch()
-      toast.success('Leave saved.')
-      setLeaveOpen(false)
-    } catch (e) {
-      toast.error(friendlyError(e))
-    }
+    if (!leaveDate) return
+    await saveDay(
+      leaveDate,
+      {
+        status: 'Leave',
+        punchIn: null,
+        punchOut: null,
+        leaveType: type,
+        notes: notes || null,
+      },
+      recordsByDate.get(leaveDate) ?? null,
+      'Leave saved.'
+    )
+    setLeaveOpen(false)
   }
 
   const handleUpdateTimes = async (
     punchInIso: string | null,
     punchOutIso: string | null
   ) => {
-    if (!user || !todayRecord) return
-    await saveAttendanceEdit(user.id, today, {
-      status: todayRecord.status === 'WFH' ? 'WFH' : 'Present',
-      punchIn: punchInIso,
-      punchOut: punchOutIso,
-      leaveType: null,
-      notes: todayRecord.notes,
-    })
-    await refetch()
-    toast.success('Time updated.')
+    if (!todayRecord) return
+    await saveDay(
+      today,
+      {
+        status: todayRecord.status === 'WFH' ? 'WFH' : 'Present',
+        punchIn: punchInIso,
+        punchOut: punchOutIso,
+        leaveType: null,
+        notes: todayRecord.notes,
+      },
+      todayRecord,
+      'Time updated.'
+    )
   }
 
   const handleSaveEdit = async (date: string, edit: AttendanceEditInput) => {
-    if (!user) return
-    await saveAttendanceEdit(user.id, date, edit)
-    await refetch()
-    toast.success('Attendance updated.')
+    await saveDay(date, edit, recordsByDate.get(date) ?? null, 'Attendance updated.')
     setSelected(null)
   }
 
   const handleClear = (day: DayInfo) => {
     if (!day.record) return
-    void run(() => deleteAttendance(user!.id, day.record!.id), 'Record cleared.')
+    void withBusy(() => clearDay(day.date, day.record!, 'Record cleared.'))
     setSelected(null)
   }
 

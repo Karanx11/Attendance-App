@@ -1,37 +1,43 @@
 import { useMemo, useState } from 'react'
 import type { AttendanceEditInput, DayInfo, LeaveType } from '@/types'
-import { useAuth } from '@/contexts/AuthContext'
 import { useRangeData } from '@/hooks/useRangeData'
-import { useToast } from '@/components/Toast/ToastProvider'
+import { useAttendanceWrite } from '@/hooks/useAttendanceWrite'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
 import { YearHeatmap } from '@/components/YearHeatmap/YearHeatmap'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
 import { StatCard } from '@/components/StatCard/StatCard'
 import { Skeleton } from '@/components/ui/Skeleton'
-import {
-  deleteAttendance,
-  friendlyError,
-  markLeave,
-  saveAttendanceEdit,
-} from '@/services/attendance'
 import { monthRange } from '@/utils/date'
 
 export function CalendarPage() {
-  const { user } = useAuth()
-  const toast = useToast()
-
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
 
   const { start, end } = useMemo(() => monthRange(year, month), [year, month])
-  const { recordsByDate, dayInfos, stats, loading, refetch } = useRangeData(start, end)
+  const monthData = useRangeData(start, end)
+  const { recordsByDate, dayInfos, stats, loading } = monthData
 
   // Whole-year data for the heatmap below the calendar.
   const yearStart = `${year}-01-01`
   const yearEnd = `${year}-12-31`
   const yearData = useRangeData(yearStart, yearEnd)
+
+  // Offline-aware writes fan out to both the month and year views.
+  const { saveDay, clearDay } = useAttendanceWrite({
+    upsertLocal: (r) => {
+      monthData.upsertLocal(r)
+      yearData.upsertLocal(r)
+    },
+    removeLocal: (d) => {
+      monthData.removeLocal(d)
+      yearData.removeLocal(d)
+    },
+    refetch: async () => {
+      await Promise.all([monthData.refetch(), yearData.refetch()])
+    },
+  })
 
   const [selected, setSelected] = useState<DayInfo | null>(null)
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -58,35 +64,33 @@ export function CalendarPage() {
   }
 
   const handleSaveLeave = async (type: LeaveType, notes: string) => {
-    if (!user || !leaveDate) return
-    try {
-      await markLeave(user.id, leaveDate, type, notes || null)
-      await Promise.all([refetch(), yearData.refetch()])
-      toast.success('Leave saved.')
-      setLeaveOpen(false)
-    } catch (e) {
-      toast.error(friendlyError(e))
-    }
+    if (!leaveDate) return
+    await saveDay(
+      leaveDate,
+      {
+        status: 'Leave',
+        punchIn: null,
+        punchOut: null,
+        leaveType: type,
+        notes: notes || null,
+      },
+      recordsByDate.get(leaveDate) ?? null,
+      'Leave saved.'
+    )
+    setLeaveOpen(false)
   }
 
   const handleSaveEdit = async (date: string, edit: AttendanceEditInput) => {
-    if (!user) return
-    await saveAttendanceEdit(user.id, date, edit)
-    await Promise.all([refetch(), yearData.refetch()])
-    toast.success('Attendance updated.')
+    await saveDay(date, edit, recordsByDate.get(date) ?? null, 'Attendance updated.')
     setSelected(null)
   }
 
   const handleClear = async (day: DayInfo) => {
-    if (!day.record || !user) return
+    if (!day.record) return
     setBusy(true)
     try {
-      await deleteAttendance(user.id, day.record.id)
-      await Promise.all([refetch(), yearData.refetch()])
-      toast.success('Record cleared.')
+      await clearDay(day.date, day.record, 'Record cleared.')
       setSelected(null)
-    } catch (e) {
-      toast.error(friendlyError(e))
     } finally {
       setBusy(false)
     }

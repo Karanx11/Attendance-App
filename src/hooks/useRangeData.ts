@@ -10,6 +10,7 @@ import {
 import { eachDateKey } from '@/utils/date'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
+import { SYNCED_EVENT } from '@/services/offlineQueue'
 
 interface RangeData {
   records: AttendanceRecord[]
@@ -20,6 +21,15 @@ interface RangeData {
   loading: boolean
   error: string | null
   refetch: () => Promise<void>
+  /** Optimistically insert/replace a day's record (used for offline writes). */
+  upsertLocal: (record: AttendanceRecord) => void
+  /** Optimistically remove a day's record. */
+  removeLocal: (date: string) => void
+}
+
+/** In-range check for a date key. */
+function inRange(date: string, start: string, end: string): boolean {
+  return date >= start && date <= end
 }
 
 /**
@@ -56,6 +66,32 @@ export function useRangeData(start: string, end: string): RangeData {
     void refetch()
   }, [refetch])
 
+  // Refresh from the server after an offline queue sync or when reconnecting.
+  useEffect(() => {
+    const onSync = () => void refetch()
+    window.addEventListener(SYNCED_EVENT, onSync)
+    window.addEventListener('online', onSync)
+    return () => {
+      window.removeEventListener(SYNCED_EVENT, onSync)
+      window.removeEventListener('online', onSync)
+    }
+  }, [refetch])
+
+  const upsertLocal = useCallback(
+    (record: AttendanceRecord) => {
+      if (!inRange(record.attendance_date, start, end)) return
+      setRecords((prev) => [
+        ...prev.filter((r) => r.attendance_date !== record.attendance_date),
+        record,
+      ])
+    },
+    [start, end]
+  )
+
+  const removeLocal = useCallback((date: string) => {
+    setRecords((prev) => prev.filter((r) => r.attendance_date !== date))
+  }, [])
+
   const recordsByDate = useMemo(() => toRecordMap(records), [records])
   const holidaysByDate = useMemo(() => toHolidayMap(holidays), [holidays])
   const holidaySet = useMemo(
@@ -88,5 +124,7 @@ export function useRangeData(start: string, end: string): RangeData {
     loading,
     error,
     refetch,
+    upsertLocal,
+    removeLocal,
   }
 }
