@@ -27,7 +27,6 @@ Tailwind CSS · lucide‑react**.
 - [Optional features](#optional-features)
   - [Import existing history](#import-existing-history)
   - [Install as an app (PWA)](#install-as-an-app-pwa)
-  - [Background punch‑in push](#background-punchin-push)
   - [Joining date](#joining-date)
 - [Project structure](#project-structure)
 - [Database schema](#database-schema)
@@ -96,11 +95,9 @@ Tailwind CSS · lucide‑react**.
 
 ### Reminders
 
-- **Home nudge** if it’s a working day past your reminder time and you haven’t
-  punched in.
-- **Browser notification** at your reminder time (opt‑in, in Settings).
-- **Background push** — an optional Supabase Edge Function can send the reminder
-  even when the app is closed (see [setup](#background-punchin-push)).
+- **Home nudge** if it’s a working day past your reminder time (set in Settings)
+  and you haven’t punched in yet. It’s an in‑app banner — no browser
+  notifications or push.
 
 ### Experience
 
@@ -126,7 +123,6 @@ Tailwind CSS · lucide‑react**.
 | Backend     | Supabase — Auth, PostgreSQL, Row Level Security           |
 | PWA         | vite‑plugin‑pwa + Workbox (custom service worker)         |
 | Exports     | xlsx (SheetJS), jsPDF + jspdf‑autotable                   |
-| Push        | Web Push (VAPID) via a Supabase Edge Function (Deno)      |
 
 ---
 
@@ -169,10 +165,9 @@ Optional SQL you can run later:
 
 - [`supabase/seed_attendance.sql`](supabase/seed_attendance.sql) — example of
   bulk‑loading historical attendance via SQL.
-- [`supabase/migration_tasks.sql`](supabase/migration_tasks.sql) and
-  [`supabase/migration_push.sql`](supabase/migration_push.sql) — already
-  included in `schema.sql` for fresh setups; run individually if you added those
-  features to an existing database.
+- [`supabase/migration_tasks.sql`](supabase/migration_tasks.sql) — the tasks
+  table (already included in `schema.sql` for fresh setups; run it individually
+  only if you added tasks to an existing database).
 
 ---
 
@@ -181,13 +176,9 @@ Optional SQL you can run later:
 Copy `.env.example` to `.env` and fill in:
 
 ```env
-# Required
 VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-public-key
 VITE_AUTHORIZED_EMAIL=you@example.com     # must match the user you created
-
-# Optional — only for background push notifications
-VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
 ```
 
 `.env` is git‑ignored and never committed. Set the same variables in your
@@ -236,19 +227,7 @@ already have.
 
 Open the deployed site (HTTPS) and use the browser’s **Install** / **Add to Home
 Screen** option, or **Settings → Install app**. On iPhone, installing to the
-Home Screen is required for standalone mode and background push (iOS 16.4+).
-
-### Background punch‑in push
-
-To get the punch‑in reminder even when the app is **closed**, follow
-[`supabase/PUSH_SETUP.md`](supabase/PUSH_SETUP.md). In short: generate VAPID
-keys, run [`supabase/migration_push.sql`](supabase/migration_push.sql), set
-`VITE_VAPID_PUBLIC_KEY`, deploy the
-[`send-punch-reminders`](supabase/functions/send-punch-reminders/index.ts) Edge
-Function, set its secrets, and schedule it daily with `pg_cron`. Then enable
-notifications in **Settings → Reminders**.
-
-Without this, reminders still fire while the app is open in a tab.
+Home Screen enables standalone mode (iOS 16.4+).
 
 ### Joining date
 
@@ -269,11 +248,7 @@ Update this constant to your own start date.
 ├── supabase/
 │   ├── schema.sql             # tables, RLS, triggers, holiday seed (run this)
 │   ├── migration_tasks.sql    # tasks table (also in schema.sql)
-│   ├── migration_push.sql     # push_subscriptions table
-│   ├── seed_attendance.sql    # example bulk import via SQL
-│   ├── PUSH_SETUP.md          # background push setup guide
-│   └── functions/
-│       └── send-punch-reminders/  # Deno Edge Function (daily reminder push)
+│   └── seed_attendance.sql    # example bulk import via SQL
 ├── scripts/
 │   └── gen-icons.mjs          # generates PWA icons into public/
 └── src/
@@ -291,14 +266,14 @@ Update this constant to your own start date.
     │   ├── ProtectedRoute.tsx
     │   ├── layout/ nav/ ui/   # AppLayout, nav config, Dialog + Skeleton
     ├── contexts/              # Auth, Profile, Theme
-    ├── hooks/                 # useRangeData, useInstallPrompt, usePunchInNotification
-    ├── services/              # Supabase access: attendance, tasks, push
+    ├── hooks/                 # useRangeData, useInstallPrompt
+    ├── services/              # Supabase access: attendance, tasks
     ├── data/                  # bundled attendance import
     ├── lib/                   # Supabase client
     ├── pages/                 # Login, Home, Calendar, Tasks, Reports, Settings, ConfigNeeded
     ├── utils/                 # date, attendance logic, status colours, report gen,
     │                          #   reminder, theme, config (joining date)
-    ├── sw.ts                  # custom service worker (offline caching + push)
+    ├── sw.ts                  # custom service worker (offline caching)
     ├── App.tsx  main.tsx  index.css  types/
 ```
 
@@ -309,13 +284,12 @@ Update this constant to your own start date.
 Four tables, all with Row Level Security. Holidays are readable by any
 authenticated user; everything else is scoped to `auth.uid()`.
 
-| Table                | Purpose                                    | Access (RLS)                              |
-| -------------------- | ------------------------------------------ | ----------------------------------------- |
-| `profiles`           | name, email, working days, office info     | own row only (select / insert / update)   |
-| `attendance`         | one row per day: status, punch times, etc. | own rows, full CRUD                       |
-| `tasks`              | to‑do items with dates & completion        | own rows, full CRUD                       |
-| `holidays`           | public holidays (managed via SQL)          | readable by any authenticated user        |
-| `push_subscriptions` | device push endpoints (optional)           | own rows, full CRUD                       |
+| Table        | Purpose                                    | Access (RLS)                            |
+| ------------ | ------------------------------------------ | --------------------------------------- |
+| `profiles`   | name, email, working days, office info     | own row only (select / insert / update) |
+| `attendance` | one row per day: status, punch times, etc. | own rows, full CRUD                     |
+| `tasks`      | to‑do items with dates & completion        | own rows, full CRUD                     |
+| `holidays`   | public holidays (managed via SQL)          | readable by any authenticated user      |
 
 `attendance` has a `UNIQUE(user_id, attendance_date)` constraint so there can
 never be two records for the same day. All timestamps are `TIMESTAMPTZ` (UTC)
@@ -357,15 +331,14 @@ The core rules live in [`src/utils/attendance.ts`](src/utils/attendance.ts) and
 
 **Environment (`.env`)**
 
-| Variable                 | Required | Purpose                                      |
-| ------------------------ | -------- | -------------------------------------------- |
-| `VITE_SUPABASE_URL`      | yes      | Supabase project URL                         |
-| `VITE_SUPABASE_ANON_KEY` | yes      | Supabase anon public key                     |
-| `VITE_AUTHORIZED_EMAIL`  | yes      | The only email allowed to sign in            |
-| `VITE_VAPID_PUBLIC_KEY`  | no       | Enables background push (see PUSH_SETUP.md)   |
+| Variable                 | Required | Purpose                           |
+| ------------------------ | -------- | --------------------------------- |
+| `VITE_SUPABASE_URL`      | yes      | Supabase project URL              |
+| `VITE_SUPABASE_ANON_KEY` | yes      | Supabase anon public key          |
+| `VITE_AUTHORIZED_EMAIL`  | yes      | The only email allowed to sign in |
 
 **In‑app settings** (persisted): name, working days (default Mon–Fri), office
-name/location (informational), theme, reminder time, notifications.
+name/location (informational), theme, and reminder time.
 
 **Code constants**: `JOINING_DATE` in
 [`src/utils/config.ts`](src/utils/config.ts); the standard workday length (8h)
@@ -380,7 +353,7 @@ in [`src/components/AttendanceCard/AttendanceCard.tsx`](src/components/Attendanc
 - **Single authorized user** — enforced both in the UI (any other account is
   signed out) and by RLS on the data.
 - **No secrets in the frontend** — only the anon key ships to the browser; the
-  `service_role` key is used only inside the server‑side Edge Function.
+  `service_role` key is never used client‑side.
 - `.env` and build artifacts are git‑ignored.
 
 ---
@@ -394,7 +367,6 @@ Ideas not yet built, roughly by value:
 - Configurable work hours + late‑arrival / early‑leave flags
 - Weekly summary card on Home
 - Manage holidays in‑app; make the joining date a setting
-- Monthly email digest (via the existing Edge Function + cron)
 - Overtime tracking; `.ics` export of leave; app lock (PIN/biometric)
 
 ---
