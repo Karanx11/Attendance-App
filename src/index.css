@@ -109,6 +109,10 @@ body::before {
   .btn-ghost {
     @apply btn text-slate-600 hover:bg-slate-100/70;
   }
+  /* Dark, high-contrast action button (e.g. Punch Out) — inverts in dark mode. */
+  .btn-dark {
+    @apply btn bg-slate-800 text-white hover:bg-slate-900;
+  }
   .input {
     @apply w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2.5 text-sm text-slate-800
            shadow-sm outline-none transition placeholder:text-slate-400
@@ -228,6 +232,15 @@ body::before {
   background-color: rgba(30, 41, 59, 0.7);
   border-color: rgba(148, 163, 184, 0.2);
   color: #cbd5e1;
+}
+/* Punch Out (and other .btn-dark) become a light button in dark mode so they
+ * stand out against the dark card instead of blending in. */
+.dark .btn-dark {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+.dark .btn-dark:hover {
+  background-color: #cbd5e1;
 }
 
 /* Accent tints (icon chips, badges, banners) ------------------------------ */

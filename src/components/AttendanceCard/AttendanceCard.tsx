@@ -248,7 +248,7 @@ export function AttendanceCard({
           )}
           {punchedIn && !punchedOut && (
             <button
-              className="btn w-full bg-slate-800 py-3.5 text-base text-white hover:bg-slate-900"
+              className="btn-dark w-full py-3.5 text-base"
               onClick={onPunchOut}
               disabled={busy}
             >
