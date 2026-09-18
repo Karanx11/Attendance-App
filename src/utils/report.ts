@@ -140,7 +140,7 @@ export async function buildPdf(opts: ReportOptions): Promise<jsPDF> {
   const doc = new JsPDF({ unit: 'pt', format: 'a4' })
 
   doc.setFontSize(18)
-  doc.setTextColor(30, 64, 175)
+  doc.setTextColor(107, 70, 40)
   doc.text('Attendance Report', 40, 48)
 
   doc.setFontSize(10)
@@ -153,8 +153,8 @@ export async function buildPdf(opts: ReportOptions): Promise<jsPDF> {
     head: [HEADER],
     body: days.map(dayRow),
     styles: { fontSize: 9, cellPadding: 6 },
-    headStyles: { fillColor: [37, 99, 235], textColor: 255 },
-    alternateRowStyles: { fillColor: [239, 246, 255] },
+    headStyles: { fillColor: [133, 88, 50], textColor: 255 },
+    alternateRowStyles: { fillColor: [248, 243, 238] },
     margin: { left: 40, right: 40 },
   })
 
@@ -164,7 +164,7 @@ export async function buildPdf(opts: ReportOptions): Promise<jsPDF> {
   let y = finalY + 28
 
   doc.setFontSize(13)
-  doc.setTextColor(30, 64, 175)
+  doc.setTextColor(107, 70, 40)
   doc.text('Summary', 40, y)
   y += 18
 
@@ -206,13 +206,13 @@ export function printHtmlReport(opts: ReportOptions): void {
     <style>
       * { font-family: Inter, system-ui, sans-serif; }
       body { padding: 32px; color: #0f172a; }
-      h1 { color: #1e40af; margin: 0 0 4px; font-size: 22px; }
+      h1 { color: #6b4628; margin: 0 0 4px; font-size: 22px; }
       .meta { color: #64748b; font-size: 13px; margin-bottom: 20px; }
       table { border-collapse: collapse; width: 100%; font-size: 13px; }
-      th { background: #2563eb; color: #fff; text-align: left; padding: 8px 10px; }
+      th { background: #855832; color: #fff; text-align: left; padding: 8px 10px; }
       td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
-      tr:nth-child(even) td { background: #eff6ff; }
-      h2 { color: #1e40af; font-size: 16px; margin: 24px 0 8px; }
+      tr:nth-child(even) td { background: #f8f3ee; }
+      h2 { color: #6b4628; font-size: 16px; margin: 24px 0 8px; }
       .summary td:first-child { color: #64748b; }
       @media print { button { display: none; } }
     </style></head><body>

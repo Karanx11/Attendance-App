@@ -22,7 +22,7 @@ function svg(size, { glyphFrac, rx }) {
   const sw = 2 // stroke width in glyph units
   const corner = rx == null ? 0 : rx
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" rx="${corner}" fill="#2563eb"/>
+  <rect width="${size}" height="${size}" rx="${corner}" fill="#855832"/>
   <g transform="translate(${off},${off}) scale(${scale})" fill="none" stroke="#ffffff"
      stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${glyph}</g>
 </svg>`
