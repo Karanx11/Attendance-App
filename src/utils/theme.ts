@@ -40,5 +40,5 @@ export function applyTheme(t: Theme): void {
   root.classList.toggle('dark', eff === 'dark')
   root.style.colorScheme = eff
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', eff === 'dark' ? '#0b1220' : '#eff6ff')
+  if (meta) meta.setAttribute('content', eff === 'dark' ? '#0d0b09' : '#fbf7f2')
 }

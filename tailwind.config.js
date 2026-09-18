@@ -5,21 +5,22 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Brand accent — brown (light brown in light mode, brown in dark)
         brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#f8f3ee',
+          100: '#efe3d4',
+          200: '#e1c9ac',
+          300: '#cfab81',
+          400: '#bb8b57',
+          500: '#a06f3f',
+          600: '#855832',
+          700: '#6b4628',
+          800: '#553823',
+          900: '#452e1d',
         },
         // Status colors
         present: '#22c55e',
-        wfh: '#3b82f6',
+        wfh: '#a06f3f',
         leave: '#800000',
         weekend: '#ef4444',
       },
@@ -34,9 +35,9 @@ export default {
         ],
       },
       boxShadow: {
-        glass: '0 8px 32px 0 rgba(31, 38, 135, 0.12)',
-        'glass-sm': '0 4px 16px 0 rgba(31, 38, 135, 0.08)',
-        card: '0 2px 12px 0 rgba(15, 23, 42, 0.06)',
+        glass: '0 8px 32px 0 rgba(74, 50, 30, 0.14)',
+        'glass-sm': '0 4px 16px 0 rgba(74, 50, 30, 0.1)',
+        card: '0 2px 12px 0 rgba(74, 50, 30, 0.08)',
       },
       backdropBlur: {
         xs: '2px',

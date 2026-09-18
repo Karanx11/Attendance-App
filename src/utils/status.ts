@@ -16,7 +16,7 @@ export const KIND_STYLES: Record<DayKind, KindStyle> = {
     label: 'Present',
   },
   wfh: {
-    color: '#3b82f6',
+    color: '#a06f3f',
     cell: 'bg-brand-500 text-white',
     label: 'WFH',
   },
