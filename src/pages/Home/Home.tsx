@@ -40,20 +40,50 @@ export function Home() {
   const month = now.getMonth()
   const { start, end } = useMemo(() => monthRange(year, month), [year, month])
 
-  const {
-    recordsByDate,
-    dayInfos,
-    stats,
-    loading,
-    refetch,
-    upsertLocal,
-    removeLocal,
-  } = useRangeData(start, end)
+  // Current month drives today's card + monthly stats.
+  const cur = useRangeData(start, end)
+  const { recordsByDate, dayInfos, stats, loading } = cur
+
+  // The mini calendar can browse months on its own.
+  const [calYear, setCalYear] = useState(year)
+  const [calMonth, setCalMonth] = useState(month)
+  const { start: calStart, end: calEnd } = useMemo(
+    () => monthRange(calYear, calMonth),
+    [calYear, calMonth]
+  )
+  const cal = useRangeData(calStart, calEnd)
+
+  // Offline-aware writes fan out to whichever month view holds the date.
   const { saveDay, clearDay } = useAttendanceWrite({
-    upsertLocal,
-    removeLocal,
-    refetch,
+    upsertLocal: (r) => {
+      cur.upsertLocal(r)
+      cal.upsertLocal(r)
+    },
+    removeLocal: (d) => {
+      cur.removeLocal(d)
+      cal.removeLocal(d)
+    },
+    refetch: async () => {
+      await Promise.all([cur.refetch(), cal.refetch()])
+    },
   })
+
+  const refreshAll = () => void Promise.all([cur.refetch(), cal.refetch()])
+  const recordFor = (date: string) =>
+    cal.recordsByDate.get(date) ?? recordsByDate.get(date) ?? null
+
+  const prevCalMonth = () => {
+    if (calMonth === 0) {
+      setCalYear((y) => y - 1)
+      setCalMonth(11)
+    } else setCalMonth((m) => m - 1)
+  }
+  const nextCalMonth = () => {
+    if (calMonth === 11) {
+      setCalYear((y) => y + 1)
+      setCalMonth(0)
+    } else setCalMonth((m) => m + 1)
+  }
 
   const [busy, setBusy] = useState(false)
   const [selected, setSelected] = useState<DayInfo | null>(null)
@@ -153,7 +183,7 @@ export function Home() {
         leaveType: type,
         notes: notes || null,
       },
-      recordsByDate.get(leaveDate) ?? null,
+      recordFor(leaveDate),
       'Leave saved.'
     )
     setLeaveOpen(false)
@@ -179,7 +209,7 @@ export function Home() {
   }
 
   const handleSaveEdit = async (date: string, edit: AttendanceEditInput) => {
-    await saveDay(date, edit, recordsByDate.get(date) ?? null, 'Attendance updated.')
+    await saveDay(date, edit, recordFor(date), 'Attendance updated.')
     setSelected(null)
   }
 
@@ -189,12 +219,11 @@ export function Home() {
     setSelected(null)
   }
 
-  const leaveRecord =
-    leaveDate ? recordsByDate.get(leaveDate) ?? null : null
+  const leaveRecord = leaveDate ? recordFor(leaveDate) : null
 
   return (
     <div className="space-y-5">
-      <ImportBanner onImported={() => void refetch()} />
+      <ImportBanner onImported={refreshAll} />
 
       <PunchReminder
         eligible={reminderEligible}
@@ -293,20 +322,21 @@ export function Home() {
           </div>
         </div>
 
-        {/* Right: compact calendar */}
+        {/* Right: compact calendar (browsable) */}
         <div className="lg:col-span-2">
           <div className="glass-card p-4 sm:p-5">
-            {loading ? (
+            {cal.loading ? (
               <Skeleton className="h-80 w-full" />
             ) : (
               <AttendanceCalendar
-                year={year}
-                month={month}
-                dayInfos={dayInfos}
+                year={calYear}
+                month={calMonth}
+                dayInfos={cal.dayInfos}
                 onSelectDate={(date) =>
-                  setSelected(dayInfos.find((d) => d.date === date) ?? null)
+                  setSelected(cal.dayInfos.find((d) => d.date === date) ?? null)
                 }
-                showNav={false}
+                onPrevMonth={prevCalMonth}
+                onNextMonth={nextCalMonth}
               />
             )}
           </div>
