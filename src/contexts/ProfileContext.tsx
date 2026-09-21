@@ -20,7 +20,16 @@ interface ProfileContextValue {
   refresh: () => Promise<void>
   save: (
     patch: Partial<
-      Pick<Profile, 'name' | 'working_days' | 'office_name' | 'office_location'>
+      Pick<
+        Profile,
+        | 'name'
+        | 'designation'
+        | 'phone'
+        | 'date_of_birth'
+        | 'working_days'
+        | 'office_name'
+        | 'office_location'
+      >
     >
   ) => Promise<void>
 }
