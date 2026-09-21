@@ -1,4 +1,4 @@
-// Generates PWA icons from an inline SVG (blue rounded square + calendar-check).
+// Generates PWA icons from an inline SVG (brown rounded square + calendar-check).
 // Run: node scripts/gen-icons.mjs
 import sharp from 'sharp'
 import { mkdir } from 'node:fs/promises'

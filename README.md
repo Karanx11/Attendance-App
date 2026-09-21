@@ -60,7 +60,7 @@ Tailwind CSS · lucide‑react**.
 
 ### Calendar & overview
 
-- **Month calendar** colour‑coded: Present (green), WFH (blue), Leave (maroon),
+- **Month calendar** colour‑coded: Present (green), WFH (brown), Leave (maroon),
   Weekend / Holiday (red), Absent (amber), Upcoming (grey). Tap any day for a
   details popup where you can view, edit, mark leave, or clear it.
 - **Year heatmap** — a GitHub‑style grid of the whole year at a glance, below
@@ -105,8 +105,8 @@ Tailwind CSS · lucide‑react**.
   app that **opens offline** and shows your last‑loaded data.
 - **Light / Dark / System** theme with no flash on load; persists across
   refreshes.
-- Modern **glassmorphism** UI, blue + white theme, tuned for performance on
-  mobile.
+- Modern **glassmorphism** UI, warm brown + white (light) / black + brown (dark)
+  theme, tuned for performance on mobile.
 - **Single‑user by design** — only the authorized account can sign in; any
   other account is signed out immediately. Row Level Security keeps every row
   private to its owner.
