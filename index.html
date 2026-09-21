@@ -22,9 +22,10 @@
         } catch (e) {}
       })()
     </script>
-    <!-- iOS home-screen / standalone support -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" href="/favicon-64.png" />
+    <!-- iOS home-screen / standalone support. ?v bumps force browsers to refetch
+         the icon after the brown retheme (favicons are cached very aggressively). -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=brown" />
+    <link rel="icon" type="image/png" href="/favicon-64.png?v=brown" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Attendance" />

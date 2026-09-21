@@ -4,7 +4,7 @@ import { Dialog } from '../ui/Dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { JOINING_DATE } from '@/utils/config'
-import { formatFullDate, toDateKey } from '@/utils/date'
+import { formatFullDate } from '@/utils/date'
 
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -53,9 +53,7 @@ export function ProfileDialog({ open, onClose }: Props) {
   const office = [profile?.office_name, profile?.office_location]
     .filter(Boolean)
     .join(' · ')
-  const memberSince = profile?.created_at
-    ? formatFullDate(toDateKey(new Date(profile.created_at)))
-    : null
+  const memberSince = formatFullDate(JOINING_DATE)
 
   return (
     <Dialog
@@ -94,9 +92,7 @@ export function ProfileDialog({ open, onClose }: Props) {
             <Row icon={MapPin} label="Location" value={profile.office_location} />
           )}
           <Row icon={Star} label="Joining date" value={formatFullDate(JOINING_DATE)} />
-          {memberSince && (
-            <Row icon={CalendarDays} label="Member since" value={memberSince} />
-          )}
+          <Row icon={CalendarDays} label="Member since" value={memberSince} />
         </div>
       </div>
     </Dialog>
