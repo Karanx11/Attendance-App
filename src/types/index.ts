@@ -7,6 +7,9 @@ export interface Profile {
   user_id: string
   name: string | null
   email: string | null
+  designation: string | null // job title, e.g. "Software Engineer"
+  phone: string | null
+  date_of_birth: string | null // 'YYYY-MM-DD'
   working_days: number[] | null // 0=Sun .. 6=Sat
   office_name: string | null
   office_location: string | null

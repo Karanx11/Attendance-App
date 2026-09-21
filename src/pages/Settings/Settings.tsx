@@ -78,6 +78,9 @@ export function Settings() {
   const { theme, setTheme } = useTheme()
 
   const [name, setName] = useState('')
+  const [designation, setDesignation] = useState('')
+  const [phone, setPhone] = useState('')
+  const [dob, setDob] = useState('')
   const [days, setDays] = useState<number[]>(workingDays)
   const [officeName, setOfficeName] = useState('')
   const [officeLocation, setOfficeLocation] = useState('')
@@ -94,6 +97,9 @@ export function Settings() {
   useEffect(() => {
     if (profile) {
       setName(profile.name ?? '')
+      setDesignation(profile.designation ?? '')
+      setPhone(profile.phone ?? '')
+      setDob(profile.date_of_birth ?? '')
       setDays(workingDays)
       setOfficeName(profile.office_name ?? '')
       setOfficeLocation(profile.office_location ?? '')
@@ -104,7 +110,12 @@ export function Settings() {
   const saveProfile = async () => {
     setSavingProfile(true)
     try {
-      await save({ name: name.trim() || null })
+      await save({
+        name: name.trim() || null,
+        designation: designation.trim() || null,
+        phone: phone.trim() || null,
+        date_of_birth: dob || null,
+      })
       toast.success('Profile updated.')
     } catch (e) {
       toast.error(friendlyError(e))
@@ -320,6 +331,38 @@ export function Settings() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="designation">Designation</label>
+            <input
+              id="designation"
+              className="input"
+              value={designation}
+              onChange={(e) => setDesignation(e.target.value)}
+              placeholder="e.g. Software Engineer"
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="dob">Date of birth</label>
+            <input
+              id="dob"
+              type="date"
+              className="input sm:w-56"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="phone">Phone</label>
+            <input
+              id="phone"
+              type="tel"
+              inputMode="tel"
+              className="input"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. 98765 43210"
             />
           </div>
           <div>

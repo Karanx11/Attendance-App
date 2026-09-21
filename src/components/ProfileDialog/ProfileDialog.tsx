@@ -1,5 +1,13 @@
 import { useNavigate } from 'react-router-dom'
-import { Briefcase, CalendarDays, MapPin, Settings as SettingsIcon, Star } from 'lucide-react'
+import {
+  Briefcase,
+  Cake,
+  CalendarDays,
+  MapPin,
+  Phone,
+  Settings as SettingsIcon,
+  Star,
+} from 'lucide-react'
 import { Dialog } from '../ui/Dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
@@ -81,11 +89,24 @@ export function ProfileDialog({ open, onClose }: Props) {
           </div>
           <div className="min-w-0">
             <p className="truncate text-lg font-bold text-slate-800">{name}</p>
+            {profile?.designation && (
+              <p className="truncate text-sm font-semibold text-brand-600">
+                {profile.designation}
+              </p>
+            )}
             <p className="truncate text-sm text-slate-500">{user?.email}</p>
           </div>
         </div>
 
         <div className="rounded-2xl bg-slate-50/80 px-4">
+          {profile?.date_of_birth && (
+            <Row
+              icon={Cake}
+              label="Date of birth"
+              value={formatFullDate(profile.date_of_birth)}
+            />
+          )}
+          {profile?.phone && <Row icon={Phone} label="Phone" value={profile.phone} />}
           <Row icon={CalendarDays} label="Working days" value={formatWorkingDays(workingDays)} />
           {office && <Row icon={Briefcase} label="Office" value={office} />}
           {!office && profile?.office_location && (

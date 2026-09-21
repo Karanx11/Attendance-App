@@ -13,6 +13,9 @@ create table if not exists public.profiles (
   user_id    uuid unique not null references auth.users (id) on delete cascade,
   name       text,
   email      text,
+  designation   text,          -- job title, e.g. "Software Engineer"
+  phone         text,
+  date_of_birth date,
   -- Personal preferences (informational only, no GPS/tracking)
   working_days   integer[] default '{1,2,3,4,5}',  -- 0=Sun .. 6=Sat
   office_name    text,
