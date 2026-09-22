@@ -28,7 +28,7 @@ export function StatCard({
         </div>
       )}
       <div className="min-w-0">
-        <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <p className="break-words text-[11px] font-semibold uppercase leading-tight tracking-normal text-slate-500">
           {label}
         </p>
         <p className="text-xl font-bold text-slate-800">{value}</p>
