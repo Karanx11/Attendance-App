@@ -18,6 +18,7 @@ import { ImportBanner } from '@/components/ImportBanner/ImportBanner'
 import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
 import { LatePunchDialog } from '@/components/LatePunchDialog/LatePunchDialog'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
+import { MonthHoursChart } from '@/components/MonthHoursChart/MonthHoursChart'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
 import { StatCard } from '@/components/StatCard/StatCard'
@@ -322,8 +323,8 @@ export function Home() {
           </div>
         </div>
 
-        {/* Right: compact calendar (browsable) */}
-        <div className="lg:col-span-2">
+        {/* Right: compact calendar (browsable) + hours chart for the same month */}
+        <div className="space-y-5 lg:col-span-2">
           <div className="glass-card p-4 sm:p-5">
             {cal.loading ? (
               <Skeleton className="h-80 w-full" />
@@ -340,6 +341,12 @@ export function Home() {
               />
             )}
           </div>
+
+          {cal.loading ? (
+            <Skeleton className="h-52 w-full" />
+          ) : (
+            <MonthHoursChart dayInfos={cal.dayInfos} />
+          )}
         </div>
       </div>
 
