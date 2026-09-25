@@ -33,9 +33,17 @@ import { eachDateKey, todayKey } from '@/utils/date'
 import {
   getLateCutoff,
   getReminderTime,
+  getShiftAlarm,
   setLateCutoff,
   setReminderTime,
+  setShiftAlarm,
 } from '@/utils/reminder'
+import { playChime, primeAudio } from '@/utils/chime'
+import {
+  pushPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from '@/services/push'
 import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 import { useTheme } from '@/contexts/ThemeContext'
 import type { Theme } from '@/utils/theme'
@@ -93,6 +101,9 @@ export function Settings() {
   // Reminders
   const [reminderTime, setReminderTimeState] = useState(getReminderTime())
   const [lateCutoff, setLateCutoffState] = useState(getLateCutoff())
+  const [shiftAlarm, setShiftAlarmState] = useState(getShiftAlarm())
+  const [pushState, setPushState] = useState(pushPermission())
+  const [pushBusy, setPushBusy] = useState(false)
 
   useEffect(() => {
     if (profile) {
@@ -227,6 +238,45 @@ export function Settings() {
   const changeLateCutoff = (t: string) => {
     setLateCutoffState(t)
     setLateCutoff(t)
+  }
+
+  const toggleShiftAlarm = (on: boolean) => {
+    setShiftAlarmState(on)
+    setShiftAlarm(on)
+    if (on) {
+      primeAudio()
+      playChime()
+    }
+  }
+
+  const testChime = () => {
+    primeAudio()
+    playChime()
+  }
+
+  const enablePush = async () => {
+    if (!user) return
+    setPushBusy(true)
+    try {
+      const res = await subscribeToPush(user.id)
+      setPushState(pushPermission())
+      if (res.ok) toast.success('Closed-app notifications enabled.')
+      else toast.error(res.reason ?? 'Could not enable notifications.')
+    } finally {
+      setPushBusy(false)
+    }
+  }
+
+  const disablePush = async () => {
+    if (!user) return
+    setPushBusy(true)
+    try {
+      await unsubscribeFromPush(user.id)
+      setPushState(pushPermission())
+      toast.info('Closed-app notifications turned off on this device.')
+    } finally {
+      setPushBusy(false)
+    }
   }
 
   const sync = async () => {
@@ -468,6 +518,71 @@ export function Settings() {
               If you haven&apos;t punched in by this time, a “You&apos;re late”
               popup asks you to mark Present — otherwise the day is counted Absent.
             </p>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <label className="flex cursor-pointer items-center justify-between gap-3">
+              <span>
+                <span className="block text-sm font-semibold text-slate-700">
+                  8‑hour completion sound
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-400">
+                  Play a chime when 8 hours from your punch‑in are complete
+                  (only while the app is open).
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={shiftAlarm}
+                onChange={(e) => toggleShiftAlarm(e.target.checked)}
+                className="h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+              />
+            </label>
+            <button className="btn-secondary mt-3" onClick={testChime} type="button">
+              <AlarmClock className="h-4 w-4" />
+              Test sound
+            </button>
+          </div>
+
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-sm font-semibold text-slate-700">
+              Notify me even when the app is closed
+            </p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              Sends a push notification at the 8‑hour mark. Needs the one‑time
+              server setup (see PUSH_SETUP.md) and, on iPhone, installing the app
+              to your home screen.
+            </p>
+            {pushState === 'unsupported' ? (
+              <p className="mt-2 text-xs text-slate-400">
+                Not supported on this browser.
+              </p>
+            ) : pushState === 'denied' ? (
+              <p className="mt-2 text-xs text-amber-600">
+                Notifications are blocked in your browser settings — re‑enable
+                them there, then reload.
+              </p>
+            ) : pushState === 'granted' ? (
+              <button
+                className="btn-secondary mt-3"
+                onClick={() => void disablePush()}
+                disabled={pushBusy}
+                type="button"
+              >
+                {pushBusy ? <Spinner className="h-4 w-4" /> : null}
+                Turn off on this device
+              </button>
+            ) : (
+              <button
+                className="btn-primary mt-3"
+                onClick={() => void enablePush()}
+                disabled={pushBusy}
+                type="button"
+              >
+                {pushBusy ? <Spinner className="h-4 w-4" /> : <AlarmClock className="h-4 w-4" />}
+                Enable closed‑app notifications
+              </button>
+            )}
           </div>
         </div>
       </Section>
