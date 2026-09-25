@@ -52,3 +52,41 @@ registerRoute(
   })
 )
 
+// ── Web push: shift-complete notification (works when the app is closed) ─────
+self.addEventListener('push', (event) => {
+  let payload: { title?: string; body?: string; url?: string; tag?: string } = {}
+  try {
+    payload = event.data ? event.data.json() : {}
+  } catch {
+    payload = { body: event.data?.text() }
+  }
+  const title = payload.title || 'Attendance'
+  const body = payload.body || '8 hours complete — you can head home! 🎉'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/pwa-192x192.png',
+      badge: '/favicon-64.png',
+      tag: payload.tag || 'shift-complete',
+      renotify: true,
+      requireInteraction: true,
+      data: { url: payload.url || '/home' },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = (event.notification.data && event.notification.data.url) || '/home'
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if ('focus' in client) return client.focus()
+        }
+        return self.clients.openWindow(target)
+      })
+  )
+})
+

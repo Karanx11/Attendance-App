@@ -8,9 +8,12 @@ const TIME_KEY = 'punch-reminder-time'
 const DISMISS_KEY = 'punch-reminder-dismissed'
 const LATE_KEY = 'punch-late-cutoff'
 const LATE_DISMISS_KEY = 'punch-late-dismissed'
+const SHIFT_ALARM_KEY = 'shift-alarm-enabled'
 
 export const DEFAULT_REMINDER_TIME = '10:00'
 export const DEFAULT_LATE_CUTOFF = '09:30'
+/** Standard working shift used for the "8 hours complete" chime. */
+export const SHIFT_MINUTES = 8 * 60
 /** Fired on any reminder-setting change so open views can re-read it. */
 export const REMINDER_EVENT = 'reminder-change'
 
@@ -56,6 +59,14 @@ export function isLateDismissedToday(dateKey: string): boolean {
 }
 export function dismissLateToday(dateKey: string): void {
   write(LATE_DISMISS_KEY, dateKey)
+}
+
+// Shift-complete alarm: play a chime when 8 hours from punch-in elapse.
+export function getShiftAlarm(): boolean {
+  return read(SHIFT_ALARM_KEY) !== '0' // default on
+}
+export function setShiftAlarm(on: boolean): void {
+  write(SHIFT_ALARM_KEY, on ? '1' : '0')
 }
 
 /** 'HH:MM' → minutes since midnight. */

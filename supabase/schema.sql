@@ -34,6 +34,7 @@ create table if not exists public.attendance (
   total_minutes   integer,
   leave_type      text check (leave_type in ('Casual', 'Sick', 'Personal', 'Other')),
   notes           text,
+  shift_notified  boolean not null default false,
   created_at      timestamptz default now(),
   updated_at      timestamptz default now(),
   unique (user_id, attendance_date)
@@ -65,6 +66,17 @@ create table if not exists public.holidays (
   created_at   timestamptz default now(),
   unique (holiday_date, country)
 );
+
+create table if not exists public.push_subscriptions (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references auth.users (id) on delete cascade,
+  endpoint     text unique not null,
+  subscription jsonb not null,
+  created_at   timestamptz default now()
+);
+
+create index if not exists push_subscriptions_user_idx
+  on public.push_subscriptions (user_id);
 
 -- ----------------------------------------------------------------------------
 --  updated_at trigger
@@ -171,6 +183,30 @@ create policy "holidays_select_authenticated"
   on public.holidays for select
   to authenticated
   using (true);
+
+-- push_subscriptions: a user only ever touches their own rows
+alter table public.push_subscriptions enable row level security;
+
+drop policy if exists "push_select_own" on public.push_subscriptions;
+create policy "push_select_own"
+  on public.push_subscriptions for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "push_insert_own" on public.push_subscriptions;
+create policy "push_insert_own"
+  on public.push_subscriptions for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "push_update_own" on public.push_subscriptions;
+create policy "push_update_own"
+  on public.push_subscriptions for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "push_delete_own" on public.push_subscriptions;
+create policy "push_delete_own"
+  on public.push_subscriptions for delete
+  using (auth.uid() = user_id);
 
 -- ----------------------------------------------------------------------------
 --  Auto-create a profile row when a new auth user is created
