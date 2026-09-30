@@ -108,6 +108,40 @@ create trigger tasks_set_updated_at
   for each row execute function public.set_updated_at();
 
 -- ----------------------------------------------------------------------------
+--  Lock attendance edits after 2 days (no changes/back-dating once past window)
+-- ----------------------------------------------------------------------------
+
+-- Blocks UPDATE/DELETE on rows older than 2 days (INSERT stays allowed so
+-- back-fill and history import keep working).
+create or replace function public.enforce_attendance_edit_lock()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'DELETE' then
+    if old.attendance_date < current_date - 2 then
+      raise exception
+        'Attendance for % is locked; records can only be changed within 2 days.',
+        old.attendance_date using errcode = 'check_violation';
+    end if;
+    return old;
+  end if;
+  if old.attendance_date < current_date - 2
+     or new.attendance_date < current_date - 2 then
+    raise exception
+      'Attendance for % is locked; records can only be changed within 2 days.',
+      old.attendance_date using errcode = 'check_violation';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists attendance_lock_edits on public.attendance;
+create trigger attendance_lock_edits
+  before update or delete on public.attendance
+  for each row execute function public.enforce_attendance_edit_lock();
+
+-- ----------------------------------------------------------------------------
 --  Row Level Security
 -- ----------------------------------------------------------------------------
 

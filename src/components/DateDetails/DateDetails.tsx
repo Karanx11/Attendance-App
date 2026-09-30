@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Building2, CalendarOff, Laptop, Pencil, Plane, Star, Trash2 } from 'lucide-react'
+import { Building2, CalendarOff, Laptop, Lock, Pencil, Plane, Star, Trash2 } from 'lucide-react'
 import { isJoiningDate } from '@/utils/config'
+import { EDIT_LOCK_DAYS, isEditLocked } from '@/utils/editLock'
 import type { AttendanceEditInput, DayInfo, LeaveType } from '@/types'
 import { Dialog } from '../ui/Dialog'
 import { Spinner } from '../ui/Skeleton'
@@ -71,6 +72,7 @@ export function DateDetails({
   if (!day) return null
   const { record, holiday, date } = day
   const future = isFutureKey(date)
+  const locked = isEditLocked(date)
 
   const statusStyle =
     record?.status === 'Present'
@@ -222,7 +224,7 @@ export function DateDetails({
           )}
 
           {/* Actions */}
-          {!future && (
+          {!future && !locked && (
             <div className="mt-4 flex gap-2">
               {onSave && (
                 <button
@@ -260,6 +262,17 @@ export function DateDetails({
             <p className="mt-4 text-center text-xs text-slate-400">
               Future dates can&apos;t be marked.
             </p>
+          )}
+          {!future && locked && (
+            <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500">
+                <Lock className="h-4 w-4" />
+              </span>
+              <p className="text-xs font-medium text-slate-500">
+                Locked — attendance can only be edited for {EDIT_LOCK_DAYS} days.
+                This record can no longer be changed.
+              </p>
+            </div>
           )}
         </div>
       )}

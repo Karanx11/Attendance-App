@@ -14,6 +14,7 @@ import {
   queueUpsert,
 } from '@/services/offlineQueue'
 import { calcTotalMinutes } from '@/utils/attendance'
+import { EDIT_LOCK_DAYS, isEditLocked } from '@/utils/editLock'
 
 interface RangeLike {
   upsertLocal: (record: AttendanceRecord) => void
@@ -84,6 +85,10 @@ export function useAttendanceWrite(range: RangeLike) {
       okMsg: string
     ) => {
       if (!user) return
+      if (isEditLocked(date)) {
+        toast.error(`Records older than ${EDIT_LOCK_DAYS} days are locked and can't be changed.`)
+        return
+      }
       // Optimistic UI update immediately.
       range.upsertLocal(buildRecord(user.id, date, edit, existing))
 
@@ -112,6 +117,10 @@ export function useAttendanceWrite(range: RangeLike) {
   const clearDay = useCallback(
     async (date: string, record: AttendanceRecord, okMsg: string) => {
       if (!user) return
+      if (isEditLocked(date)) {
+        toast.error(`Records older than ${EDIT_LOCK_DAYS} days are locked and can't be changed.`)
+        return
+      }
       range.removeLocal(date)
 
       if (!navigator.onLine) {
