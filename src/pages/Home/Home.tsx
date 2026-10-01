@@ -19,6 +19,7 @@ import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
 import { LatePunchDialog } from '@/components/LatePunchDialog/LatePunchDialog'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
 import { MonthHoursChart } from '@/components/MonthHoursChart/MonthHoursChart'
+import { LeaveSummary } from '@/components/LeaveSummary/LeaveSummary'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
 import { StatCard } from '@/components/StatCard/StatCard'
@@ -53,6 +54,9 @@ export function Home() {
     [calYear, calMonth]
   )
   const cal = useRangeData(calStart, calEnd)
+
+  // Whole-year records power the "leave left" summary card.
+  const yearData = useRangeData(`${year}-01-01`, `${year}-12-31`)
 
   // Offline-aware writes fan out to whichever month view holds the date.
   const { saveDay, clearDay } = useAttendanceWrite({
@@ -321,6 +325,12 @@ export function Home() {
               icon={TrendingUp}
             />
           </div>
+
+          {/* Leave left this year → tap for full balances */}
+          <LeaveSummary
+            records={[...yearData.recordsByDate.values()]}
+            loading={yearData.loading}
+          />
         </div>
 
         {/* Right: compact calendar (browsable) + hours chart for the same month */}
