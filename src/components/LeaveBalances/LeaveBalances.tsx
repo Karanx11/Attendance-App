@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Pencil, Plane, X } from 'lucide-react'
-import type { AttendanceRecord, LeaveType } from '@/types'
+import type { AttendanceRecord } from '@/types'
 import { Skeleton } from '../ui/Skeleton'
-import { LEAVE_TYPES, getLeaveQuotas, setLeaveQuotas } from '@/utils/leave'
+import { LEAVE_TYPES, countLeaveByType, getLeaveQuotas, setLeaveQuotas } from '@/utils/leave'
 
 interface Props {
   year: number
@@ -26,21 +26,7 @@ export function LeaveBalances({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(quotas)
 
-  const used = useMemo(() => {
-    const counts: Record<LeaveType, number> = {
-      Casual: 0,
-      Sick: 0,
-      Personal: 0,
-      Other: 0,
-    }
-    for (const r of records) {
-      if (r.status === 'Leave') {
-        const t = (r.leave_type as LeaveType) ?? 'Other'
-        counts[t] = (counts[t] ?? 0) + 1
-      }
-    }
-    return counts
-  }, [records])
+  const used = useMemo(() => countLeaveByType(records), [records])
 
   const totalUsed = LEAVE_TYPES.reduce((s, t) => s + used[t], 0)
 
