@@ -6,6 +6,7 @@ import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCa
 import { YearHeatmap } from '@/components/YearHeatmap/YearHeatmap'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
+import { LeaveBalances } from '@/components/LeaveBalances/LeaveBalances'
 import { StatCard } from '@/components/StatCard/StatCard'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { monthRange } from '@/utils/date'
@@ -14,6 +15,7 @@ export function CalendarPage() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
+  const [tab, setTab] = useState<'calendar' | 'balances'>('calendar')
 
   const { start, end } = useMemo(() => monthRange(year, month), [year, month])
   const monthData = useRangeData(start, end)
@@ -109,56 +111,94 @@ export function CalendarPage() {
         </p>
       </header>
 
-      {/* Mobile: stats on top, calendar below. Desktop: calendar left, stats side. */}
-      <div className="grid gap-5 lg:grid-cols-3">
-        {/* Stats */}
-        <div className="lg:order-2 lg:col-span-1">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
-            <StatCard label="Present" value={loading ? '—' : stats.present} accent="text-green-600" iconBg="bg-green-50" />
-            <StatCard label="WFH" value={loading ? '—' : stats.wfh} accent="text-brand-600" iconBg="bg-brand-50" />
-            <StatCard label="Leave" value={loading ? '—' : stats.leave} accent="text-[#800000]" iconBg="bg-[#800000]/10" />
-            <StatCard label="Absent" value={loading ? '—' : stats.absent} accent="text-amber-600" iconBg="bg-amber-50" />
-          </div>
-        </div>
+      {/* Tabs: Calendar | Balances */}
+      <div className="inline-flex rounded-xl bg-slate-100 p-1">
+        {(
+          [
+            ['calendar', 'Calendar'],
+            ['balances', 'Balances'],
+          ] as const
+        ).map(([val, lbl]) => (
+          <button
+            key={val}
+            type="button"
+            onClick={() => setTab(val)}
+            className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${
+              tab === val
+                ? 'bg-white text-brand-700 shadow-glass-sm'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {lbl}
+          </button>
+        ))}
+      </div>
 
-        {/* Calendar */}
-        <div className="lg:order-1 lg:col-span-2">
+      {tab === 'calendar' && (
+        <>
+          {/* Mobile: stats on top, calendar below. Desktop: calendar left, stats side. */}
+          <div className="grid gap-5 lg:grid-cols-3">
+            {/* Stats */}
+            <div className="lg:order-2 lg:col-span-1">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+                <StatCard label="Present" value={loading ? '—' : stats.present} accent="text-green-600" iconBg="bg-green-50" />
+                <StatCard label="WFH" value={loading ? '—' : stats.wfh} accent="text-brand-600" iconBg="bg-brand-50" />
+                <StatCard label="Leave" value={loading ? '—' : stats.leave} accent="text-[#800000]" iconBg="bg-[#800000]/10" />
+                <StatCard label="Absent" value={loading ? '—' : stats.absent} accent="text-amber-600" iconBg="bg-amber-50" />
+              </div>
+            </div>
+
+            {/* Calendar */}
+            <div className="lg:order-1 lg:col-span-2">
+              <div className="glass-card p-4 sm:p-6">
+                {loading ? (
+                  <Skeleton className="h-96 w-full" />
+                ) : (
+                  <AttendanceCalendar
+                    year={year}
+                    month={month}
+                    dayInfos={dayInfos}
+                    onSelectDate={(date) =>
+                      setSelected(dayInfos.find((d) => d.date === date) ?? null)
+                    }
+                    onPrevMonth={prevMonth}
+                    onNextMonth={nextMonth}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Year-at-a-glance heatmap */}
           <div className="glass-card p-4 sm:p-6">
-            {loading ? (
-              <Skeleton className="h-96 w-full" />
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-800">{year} overview</h3>
+            </div>
+            {yearData.loading ? (
+              <Skeleton className="h-28 w-full" />
             ) : (
-              <AttendanceCalendar
+              <YearHeatmap
                 year={year}
-                month={month}
-                dayInfos={dayInfos}
+                dayInfos={yearData.dayInfos}
                 onSelectDate={(date) =>
-                  setSelected(dayInfos.find((d) => d.date === date) ?? null)
+                  setSelected(yearData.dayInfos.find((d) => d.date === date) ?? null)
                 }
-                onPrevMonth={prevMonth}
-                onNextMonth={nextMonth}
               />
             )}
           </div>
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Year-at-a-glance heatmap */}
-      <div className="glass-card p-4 sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-bold text-slate-800">{year} overview</h3>
-        </div>
-        {yearData.loading ? (
-          <Skeleton className="h-28 w-full" />
-        ) : (
-          <YearHeatmap
-            year={year}
-            dayInfos={yearData.dayInfos}
-            onSelectDate={(date) =>
-              setSelected(yearData.dayInfos.find((d) => d.date === date) ?? null)
-            }
-          />
-        )}
-      </div>
+      {tab === 'balances' && (
+        <LeaveBalances
+          year={year}
+          records={[...yearData.recordsByDate.values()]}
+          loading={yearData.loading}
+          onPrevYear={() => setYear((y) => y - 1)}
+          onNextYear={() => setYear((y) => Math.min(now.getFullYear(), y + 1))}
+          canGoNext={year < now.getFullYear()}
+        />
+      )}
 
       <DateDetails
         open={Boolean(selected)}
