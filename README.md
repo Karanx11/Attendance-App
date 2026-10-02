@@ -450,6 +450,4 @@ Ideas not yet built, roughly by value:
 
 ---
 
-## License
 
-Personal project — use it for yourself. No warranty.
