@@ -16,6 +16,7 @@ create table if not exists public.profiles (
   designation   text,          -- job title, e.g. "Software Engineer"
   phone         text,
   date_of_birth date,
+  avatar_url    text,          -- profile photo as a compressed data URL
   -- Personal preferences (informational only, no GPS/tracking)
   working_days   integer[] default '{1,2,3,4,5}',  -- 0=Sun .. 6=Sat
   office_name    text,

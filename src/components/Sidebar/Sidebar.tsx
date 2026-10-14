@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { CalendarCheck, ChevronRight, LogOut } from 'lucide-react'
 import { NAV_ITEMS } from '../nav/navItems'
 import { ProfileDialog } from '../ProfileDialog/ProfileDialog'
+import { Avatar } from '../Avatar/Avatar'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 
@@ -54,9 +55,12 @@ export function Sidebar() {
           className="mb-2 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/70"
           aria-label="View profile"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-700">
-            {name.charAt(0).toUpperCase()}
-          </div>
+          <Avatar
+            url={profile?.avatar_url}
+            name={name}
+            className="h-9 w-9 shrink-0"
+            textClassName="text-sm"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-700">{name}</p>
             <p className="truncate text-xs text-slate-400">{user?.email}</p>
