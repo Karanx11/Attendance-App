@@ -8,14 +8,16 @@ import {
   Plane,
   TrendingUp,
 } from 'lucide-react'
-import type { AttendanceEditInput, DayInfo, LeaveType } from '@/types'
+import type { AttendanceEditInput, AttendanceRecord, DayInfo, LeaveType } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProfile } from '@/contexts/ProfileContext'
 import { useRangeData } from '@/hooks/useRangeData'
 import { useAttendanceWrite } from '@/hooks/useAttendanceWrite'
+import { useForgottenPunchOut } from '@/hooks/useForgottenPunchOut'
 import { AttendanceCard } from '@/components/AttendanceCard/AttendanceCard'
 import { ImportBanner } from '@/components/ImportBanner/ImportBanner'
 import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
+import { PunchOutRecovery } from '@/components/PunchOutRecovery/PunchOutRecovery'
 import { LatePunchDialog } from '@/components/LatePunchDialog/LatePunchDialog'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
 import { MonthHoursChart } from '@/components/MonthHoursChart/MonthHoursChart'
@@ -226,6 +228,30 @@ export function Home() {
 
   const leaveRecord = leaveDate ? recordFor(leaveDate) : null
 
+  // Detect a past day you forgot to punch out of (within the editable window).
+  const forgotten = useForgottenPunchOut()
+  const handleRecoverPunchOut = async (date: string, punchOutIso: string) => {
+    const rec = forgotten.pending
+    if (!rec) return
+    await saveDay(
+      date,
+      {
+        status: rec.status === 'WFH' ? 'WFH' : 'Present',
+        punchIn: rec.punch_in,
+        punchOut: punchOutIso,
+        leaveType: null,
+        notes: rec.notes,
+      },
+      rec,
+      'Punch-out saved.'
+    )
+    await forgotten.refresh()
+  }
+  const handleClearForgotten = async (rec: AttendanceRecord) => {
+    await clearDay(rec.attendance_date, rec, 'Day cleared.')
+    await forgotten.refresh()
+  }
+
   return (
     <div className="space-y-5">
       <ImportBanner onImported={refreshAll} />
@@ -234,6 +260,13 @@ export function Home() {
         eligible={reminderEligible}
         busy={busy}
         onPunchIn={handlePunchIn}
+      />
+
+      <PunchOutRecovery
+        record={forgotten.pending}
+        onSave={handleRecoverPunchOut}
+        onClear={handleClearForgotten}
+        onDismiss={forgotten.dismiss}
       />
 
       <LatePunchDialog
