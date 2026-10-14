@@ -13,8 +13,14 @@ import {
 import type { AttendanceRecord } from '@/types'
 import { Dialog } from '../ui/Dialog'
 import { Spinner } from '../ui/Skeleton'
-import { combineDateTime, formatDuration, formatTime, toTimeInput } from '@/utils/date'
-import { calcTotalMinutes } from '@/utils/attendance'
+import {
+  combineDateTime,
+  formatDuration,
+  formatDurationWithSeconds,
+  formatTime,
+  formatTimeWithSeconds,
+  toTimeInput,
+} from '@/utils/date'
 
 interface Props {
   record: AttendanceRecord | null
@@ -47,20 +53,29 @@ export function AttendanceCard({
   const [savingTime, setSavingTime] = useState(false)
   const [timeErr, setTimeErr] = useState<string | null>(null)
 
-  // Tick every 30s while working so the elapsed time and the "you can leave"
-  // hint stay current without needing a refetch.
+  // Tick every second while working so the elapsed timer (with seconds) and the
+  // "you can leave" hint stay current without needing a refetch.
   const [, setTick] = useState(0)
   const working = punchedIn && !punchedOut
   useEffect(() => {
     if (!working) return
-    const id = window.setInterval(() => setTick((t) => t + 1), 30_000)
+    const id = window.setInterval(() => setTick((t) => t + 1), 1_000)
     return () => window.clearInterval(id)
   }, [working])
 
-  const liveMinutes =
-    punchedIn && !punchedOut && record?.punch_in
-      ? calcTotalMinutes(record.punch_in, new Date().toISOString())
-      : record?.total_minutes ?? null
+  // Live elapsed in whole seconds (to now while working, to punch-out once done).
+  const liveSeconds = record?.punch_in
+    ? Math.max(
+        0,
+        Math.floor(
+          ((punchedOut && record.punch_out
+            ? new Date(record.punch_out).getTime()
+            : Date.now()) -
+            new Date(record.punch_in).getTime()) /
+            1000
+        )
+      )
+    : null
 
   // Standard 8-hour workday: when can you leave the office?
   const STANDARD_WORK_MINUTES = 8 * 60
@@ -183,13 +198,13 @@ export function AttendanceCard({
             <div className="mb-4 grid grid-cols-2 gap-3">
               <TimeBlock
                 label="Punch In"
-                value={formatTime(record?.punch_in ?? null)}
+                value={formatTimeWithSeconds(record?.punch_in ?? null)}
                 onClick={() => openEdit('in')}
                 editable
               />
               <TimeBlock
                 label="Punch Out"
-                value={punchedOut ? formatTime(record?.punch_out ?? null) : '--:--'}
+                value={punchedOut ? formatTimeWithSeconds(record?.punch_out ?? null) : '--:--:--'}
                 onClick={() => openEdit('out')}
                 editable
                 hint={punchedOut ? undefined : 'Tap to set'}
@@ -205,8 +220,8 @@ export function AttendanceCard({
                   {punchedOut ? 'Total Working Time' : 'Elapsed'}
                 </span>
               </div>
-              <span className="text-lg font-bold text-brand-700">
-                {formatDuration(liveMinutes)}
+              <span className="text-lg font-bold tabular-nums text-brand-700">
+                {formatDurationWithSeconds(liveSeconds)}
               </span>
             </div>
           )}
