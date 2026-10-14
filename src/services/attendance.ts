@@ -73,6 +73,7 @@ export async function updateProfile(
       | 'designation'
       | 'phone'
       | 'date_of_birth'
+      | 'avatar_url'
       | 'working_days'
       | 'office_name'
       | 'office_location'

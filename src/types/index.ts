@@ -10,6 +10,7 @@ export interface Profile {
   designation: string | null // job title, e.g. "Software Engineer"
   phone: string | null
   date_of_birth: string | null // 'YYYY-MM-DD'
+  avatar_url: string | null // profile photo (compressed data URL)
   working_days: number[] | null // 0=Sun .. 6=Sat
   office_name: string | null
   office_location: string | null
