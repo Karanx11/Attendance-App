@@ -9,7 +9,7 @@ import {
   combineDateTime,
   formatDuration,
   formatFullDate,
-  formatTime,
+  formatTimeWithSeconds,
   isFutureKey,
   toTimeInput,
 } from '@/utils/date'
@@ -175,8 +175,8 @@ export function DateDetails({
           {record && record.status !== 'Leave' && (
             <div className="rounded-2xl bg-slate-50/80 px-4">
               <Row label="Status" value={record.status} />
-              <Row label="Punch In" value={formatTime(record.punch_in)} />
-              <Row label="Punch Out" value={formatTime(record.punch_out)} />
+              <Row label="Punch In" value={formatTimeWithSeconds(record.punch_in)} />
+              <Row label="Punch Out" value={formatTimeWithSeconds(record.punch_out)} />
               <Row
                 label="Working Hours"
                 value={

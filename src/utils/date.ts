@@ -138,6 +138,28 @@ export function formatDuration(minutes: number | null | undefined): string {
   return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`
 }
 
+/** "08:53:12 AM" — like formatTime but including seconds. */
+export function formatTimeWithSeconds(iso: string | null): string {
+  if (!iso) return '--:--:--'
+  const d = new Date(iso)
+  let h = d.getHours()
+  const m = d.getMinutes()
+  const s = d.getSeconds()
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  h = h % 12
+  if (h === 0) h = 12
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')} ${ampm}`
+}
+
+/** "04h 56m 12s" from a whole number of seconds. */
+export function formatDurationWithSeconds(seconds: number | null | undefined): string {
+  if (seconds == null || seconds < 0) return '--'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  return `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`
+}
+
 /** "09:12 AM" from minutes-since-midnight (for averaged punch times). */
 export function formatTimeFromMinutes(minutes: number | null): string {
   if (minutes == null) return '--:--'
