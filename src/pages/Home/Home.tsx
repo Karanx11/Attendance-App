@@ -20,7 +20,7 @@ import { PunchReminder } from '@/components/PunchReminder/PunchReminder'
 import { PunchOutRecovery } from '@/components/PunchOutRecovery/PunchOutRecovery'
 import { LatePunchDialog } from '@/components/LatePunchDialog/LatePunchDialog'
 import { AttendanceCalendar } from '@/components/AttendanceCalendar/AttendanceCalendar'
-import { MonthHoursChart } from '@/components/MonthHoursChart/MonthHoursChart'
+import { MonthBreakdownChart } from '@/components/MonthBreakdownChart/MonthBreakdownChart'
 import { LeaveSummary } from '@/components/LeaveSummary/LeaveSummary'
 import { DateDetails } from '@/components/DateDetails/DateDetails'
 import { LeaveModal } from '@/components/LeaveModal/LeaveModal'
@@ -388,7 +388,7 @@ export function Home() {
           {cal.loading ? (
             <Skeleton className="h-52 w-full" />
           ) : (
-            <MonthHoursChart dayInfos={cal.dayInfos} />
+            <MonthBreakdownChart dayInfos={cal.dayInfos} />
           )}
         </div>
       </div>
