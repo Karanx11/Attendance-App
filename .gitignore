@@ -12,6 +12,10 @@ dist-ssr
 dev-dist
 *.local
 
+# Build artifacts (auto-generated)
+*.tsbuildinfo
+supabase/.temp
+
 # Environment — never commit secrets
 .env
 .env.*
