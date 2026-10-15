@@ -121,6 +121,25 @@ export async function getAttendanceRange(
   return (data ?? []) as AttendanceRecord[]
 }
 
+/**
+ * Lightweight: just the Leave rows for a year (3 columns), for the leave-balance
+ * summaries. Far smaller than pulling every day's full record.
+ */
+export async function getYearLeave(
+  userId: string,
+  year: number
+): Promise<Pick<AttendanceRecord, 'attendance_date' | 'status' | 'leave_type'>[]> {
+  const { data, error } = await supabase
+    .from('attendance')
+    .select('attendance_date, status, leave_type')
+    .eq('user_id', userId)
+    .eq('status', 'Leave')
+    .gte('attendance_date', `${year}-01-01`)
+    .lte('attendance_date', `${year}-12-31`)
+  if (error) throw error
+  return (data ?? []) as Pick<AttendanceRecord, 'attendance_date' | 'status' | 'leave_type'>[]
+}
+
 export async function getAttendanceForDate(
   userId: string,
   date: string

@@ -7,7 +7,7 @@ import {
   precacheAndRoute,
 } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
-import { CacheFirst, NetworkFirst } from 'workbox-strategies'
+import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 
@@ -25,12 +25,15 @@ cleanupOutdatedCaches()
 // SPA navigation fallback (any route works offline).
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
 
-// Last-loaded attendance/tasks data stays viewable offline.
+// Attendance/tasks reads: serve the cached copy instantly and refresh in the
+// background (stale-while-revalidate). This keeps the app fast on slow/high-
+// latency mobile networks instead of waiting on each round-trip. Writes aren't
+// cached (GET only), and the app applies the server's returned record directly,
+// so a cached read can never clobber a just-made change.
 registerRoute(
   ({ url }) => url.hostname.endsWith('.supabase.co'),
-  new NetworkFirst({
+  new StaleWhileRevalidate({
     cacheName: 'supabase-api',
-    networkTimeoutSeconds: 5,
     plugins: [
       new ExpirationPlugin({ maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 }),
       new CacheableResponsePlugin({ statuses: [0, 200] }),

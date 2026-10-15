@@ -53,7 +53,14 @@ export function useRangeData(start: string, end: string): RangeData {
         getAttendanceRange(user.id, start, end),
         getHolidays(start, end),
       ])
-      setRecords(recs)
+      // Keep optimistic, not-yet-synced offline records (local ids) for any date
+      // the fetched set doesn't include — a cached/stale read must not drop them.
+      setRecords((prev) => {
+        const pending = prev.filter((r) => r.id.startsWith('local-'))
+        if (pending.length === 0) return recs
+        const haveDate = new Set(recs.map((r) => r.attendance_date))
+        return [...recs, ...pending.filter((p) => !haveDate.has(p.attendance_date))]
+      })
       setHolidays(hols)
     } catch (e) {
       setError((e as Error).message)

@@ -57,9 +57,6 @@ export function Home() {
   )
   const cal = useRangeData(calStart, calEnd)
 
-  // Whole-year records power the "leave left" summary card.
-  const yearData = useRangeData(`${year}-01-01`, `${year}-12-31`)
-
   // Offline-aware writes fan out to whichever month view holds the date.
   const { saveDay, clearDay } = useAttendanceWrite({
     upsertLocal: (r) => {
@@ -360,10 +357,7 @@ export function Home() {
           </div>
 
           {/* Leave left this year → tap for full balances */}
-          <LeaveSummary
-            records={[...yearData.recordsByDate.values()]}
-            loading={yearData.loading}
-          />
+          <LeaveSummary />
         </div>
 
         {/* Right: compact calendar (browsable) + hours chart for the same month */}
