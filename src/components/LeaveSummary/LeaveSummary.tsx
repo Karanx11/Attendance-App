@@ -1,18 +1,44 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Plane } from 'lucide-react'
 import type { AttendanceRecord } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
+import { getYearLeave } from '@/services/attendance'
 import { LEAVE_TYPES, countLeaveByType, getLeaveQuotas } from '@/utils/leave'
 
-interface Props {
-  /** Attendance records for the current year. */
-  records: AttendanceRecord[]
-  loading: boolean
-}
+type LeaveRow = Pick<AttendanceRecord, 'status' | 'leave_type'>
 
-/** Compact "leave left this year" card for the Home screen. Links to Balances. */
-export function LeaveSummary({ records, loading }: Props) {
+/**
+ * Compact "leave left this year" card for the Home screen. Self-fetches a tiny
+ * leave-only query (kept off the Home initial-load critical path). Links to
+ * Balances.
+ */
+export function LeaveSummary() {
+  const { user } = useAuth()
+  const [rows, setRows] = useState<LeaveRow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    setLoading(true)
+    getYearLeave(user.id, new Date().getFullYear())
+      .then((r) => {
+        if (!cancelled) setRows(r)
+      })
+      .catch(() => {
+        /* best-effort */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
   const quotas = getLeaveQuotas()
-  const used = countLeaveByType(records)
+  const used = countLeaveByType(rows)
   const types = LEAVE_TYPES.filter((t) => quotas[t] > 0)
 
   // No quotas configured → nothing useful to show.

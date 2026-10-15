@@ -4,7 +4,9 @@ import type { AttendanceRecord, LeaveType } from '@/types'
 export const LEAVE_TYPES: LeaveType[] = ['Casual', 'Sick', 'Personal', 'Other']
 
 /** Count leave days per type from a set of attendance records. */
-export function countLeaveByType(records: AttendanceRecord[]): Record<LeaveType, number> {
+export function countLeaveByType(
+  records: Pick<AttendanceRecord, 'status' | 'leave_type'>[]
+): Record<LeaveType, number> {
   const counts: Record<LeaveType, number> = { Casual: 0, Sick: 0, Personal: 0, Other: 0 }
   for (const r of records) {
     if (r.status === 'Leave') {

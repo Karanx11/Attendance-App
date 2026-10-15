@@ -98,8 +98,10 @@ export function useAttendanceWrite(range: RangeLike) {
         return
       }
       try {
-        await saveAttendanceEdit(user.id, date, edit)
-        await range.refetch()
+        // Use the authoritative record the server returns, so we never need a
+        // follow-up read (one fewer round-trip, and safe with cached reads).
+        const saved = await saveAttendanceEdit(user.id, date, edit)
+        range.upsertLocal(saved)
         toast.success(okMsg)
       } catch (e) {
         if (isNetworkError(e)) {
@@ -135,7 +137,7 @@ export function useAttendanceWrite(range: RangeLike) {
       }
       try {
         await deleteAttendance(user.id, record.id)
-        await range.refetch()
+        // removeLocal already applied the change; no follow-up read needed.
         toast.success(okMsg)
       } catch (e) {
         if (isNetworkError(e)) {
