@@ -33,12 +33,9 @@ import { eachDateKey, todayKey } from '@/utils/date'
 import {
   getLateCutoff,
   getReminderTime,
-  getShiftAlarm,
   setLateCutoff,
   setReminderTime,
-  setShiftAlarm,
 } from '@/utils/reminder'
-import { playChime, primeAudio } from '@/utils/chime'
 import {
   isPushSubscribed,
   pushPermission,
@@ -102,7 +99,6 @@ export function Settings() {
   // Reminders
   const [reminderTime, setReminderTimeState] = useState(getReminderTime())
   const [lateCutoff, setLateCutoffState] = useState(getLateCutoff())
-  const [shiftAlarm, setShiftAlarmState] = useState(getShiftAlarm())
   const [pushState, setPushState] = useState(pushPermission())
   const [pushBusy, setPushBusy] = useState(false)
   const [subscribed, setSubscribed] = useState(false)
@@ -246,20 +242,6 @@ export function Settings() {
   const changeLateCutoff = (t: string) => {
     setLateCutoffState(t)
     setLateCutoff(t)
-  }
-
-  const toggleShiftAlarm = (on: boolean) => {
-    setShiftAlarmState(on)
-    setShiftAlarm(on)
-    if (on) {
-      primeAudio()
-      playChime()
-    }
-  }
-
-  const testChime = () => {
-    primeAudio()
-    playChime()
   }
 
   const enablePush = async () => {
@@ -528,30 +510,6 @@ export function Settings() {
               If you haven&apos;t punched in by this time, a “You&apos;re late”
               popup asks you to mark Present — otherwise the day is counted Absent.
             </p>
-          </div>
-
-          <div className="border-t border-slate-100 pt-4">
-            <label className="flex cursor-pointer items-center justify-between gap-3">
-              <span>
-                <span className="block text-sm font-semibold text-slate-700">
-                  8‑hour completion sound
-                </span>
-                <span className="mt-0.5 block text-xs text-slate-400">
-                  Play a chime when 8 hours from your punch‑in are complete
-                  (only while the app is open).
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={shiftAlarm}
-                onChange={(e) => toggleShiftAlarm(e.target.checked)}
-                className="h-5 w-5 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
-              />
-            </label>
-            <button className="btn-secondary mt-3" onClick={testChime} type="button">
-              <AlarmClock className="h-4 w-4" />
-              Test sound
-            </button>
           </div>
 
           <div className="border-t border-slate-100 pt-4">
