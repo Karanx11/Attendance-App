@@ -16,6 +16,17 @@ export function pushPermission(): NotificationPermission | 'unsupported' {
   return Notification.permission
 }
 
+/** True when this device currently has an active push subscription. */
+export async function isPushSubscribed(): Promise<boolean> {
+  if (!isPushSupported()) return false
+  try {
+    const reg = await navigator.serviceWorker.ready
+    return Boolean(await reg.pushManager.getSubscription())
+  } catch {
+    return false
+  }
+}
+
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
   const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')

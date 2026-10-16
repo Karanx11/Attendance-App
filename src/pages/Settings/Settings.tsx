@@ -40,6 +40,7 @@ import {
 } from '@/utils/reminder'
 import { playChime, primeAudio } from '@/utils/chime'
 import {
+  isPushSubscribed,
   pushPermission,
   subscribeToPush,
   unsubscribeFromPush,
@@ -104,6 +105,13 @@ export function Settings() {
   const [shiftAlarm, setShiftAlarmState] = useState(getShiftAlarm())
   const [pushState, setPushState] = useState(pushPermission())
   const [pushBusy, setPushBusy] = useState(false)
+  const [subscribed, setSubscribed] = useState(false)
+
+  // The toggle reflects whether this device actually has a subscription — not
+  // just the browser permission (which stays "granted" after you unsubscribe).
+  useEffect(() => {
+    void isPushSubscribed().then(setSubscribed)
+  }, [])
 
   useEffect(() => {
     if (profile) {
@@ -260,6 +268,7 @@ export function Settings() {
     try {
       const res = await subscribeToPush(user.id)
       setPushState(pushPermission())
+      setSubscribed(await isPushSubscribed())
       if (res.ok) toast.success('Closed-app notifications enabled.')
       else toast.error(res.reason ?? 'Could not enable notifications.')
     } finally {
@@ -273,6 +282,7 @@ export function Settings() {
     try {
       await unsubscribeFromPush(user.id)
       setPushState(pushPermission())
+      setSubscribed(await isPushSubscribed())
       toast.info('Closed-app notifications turned off on this device.')
     } finally {
       setPushBusy(false)
@@ -557,21 +567,27 @@ export function Settings() {
               <p className="mt-2 text-xs text-slate-400">
                 Not supported on this browser.
               </p>
+            ) : subscribed ? (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Enabled on this device
+                </span>
+                <button
+                  className="btn-secondary"
+                  onClick={() => void disablePush()}
+                  disabled={pushBusy}
+                  type="button"
+                >
+                  {pushBusy ? <Spinner className="h-4 w-4" /> : null}
+                  Disable
+                </button>
+              </div>
             ) : pushState === 'denied' ? (
               <p className="mt-2 text-xs text-amber-600">
                 Notifications are blocked in your browser settings — re‑enable
                 them there, then reload.
               </p>
-            ) : pushState === 'granted' ? (
-              <button
-                className="btn-secondary mt-3"
-                onClick={() => void disablePush()}
-                disabled={pushBusy}
-                type="button"
-              >
-                {pushBusy ? <Spinner className="h-4 w-4" /> : null}
-                Turn off on this device
-              </button>
             ) : (
               <button
                 className="btn-primary mt-3"
@@ -580,7 +596,7 @@ export function Settings() {
                 type="button"
               >
                 {pushBusy ? <Spinner className="h-4 w-4" /> : <AlarmClock className="h-4 w-4" />}
-                Enable closed‑app notifications
+                Enable
               </button>
             )}
           </div>
