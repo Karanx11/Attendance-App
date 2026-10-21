@@ -1,4 +1,4 @@
-export type AttendanceStatus = 'Present' | 'WFH' | 'Leave'
+export type AttendanceStatus = 'Present' | 'WFH' | 'Leave' | 'Holiday'
 
 export type LeaveType = 'Casual' | 'Sick' | 'Personal' | 'Other'
 

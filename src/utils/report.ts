@@ -28,6 +28,9 @@ export function dayStatusLabel(d: DayInfo): string {
     if (r.status === 'Leave') {
       return r.leave_type ? `Leave (${r.leave_type})` : 'Leave'
     }
+    if (r.status === 'Holiday') {
+      return r.notes ? `Holiday (${r.notes})` : 'Holiday'
+    }
     return r.status // Present / WFH
   }
   if (d.holiday) return `Holiday — ${d.holiday.holiday_name}`

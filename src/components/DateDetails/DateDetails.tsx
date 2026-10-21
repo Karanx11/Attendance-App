@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Building2, CalendarOff, Laptop, Lock, Pencil, Plane, Star, Trash2 } from 'lucide-react'
+import {
+  Building2,
+  CalendarOff,
+  Laptop,
+  Lock,
+  Palmtree,
+  Pencil,
+  Plane,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import { isJoiningDate } from '@/utils/config'
 import { EDIT_LOCK_DAYS, isEditLocked } from '@/utils/editLock'
 import type { AttendanceEditInput, DayInfo, LeaveType } from '@/types'
@@ -47,7 +57,7 @@ export function DateDetails({
   busy,
 }: Props) {
   const [editing, setEditing] = useState(false)
-  const [status, setStatus] = useState<'Present' | 'WFH' | 'Leave'>('Present')
+  const [status, setStatus] = useState<'Present' | 'WFH' | 'Leave' | 'Holiday'>('Present')
   const [inTime, setInTime] = useState('')
   const [outTime, setOutTime] = useState('')
   const [leaveType, setLeaveType] = useState<LeaveType>('Casual')
@@ -81,27 +91,29 @@ export function DateDetails({
         ? KIND_STYLES.wfh
         : record?.status === 'Leave'
           ? KIND_STYLES.leave
-          : null
+          : record?.status === 'Holiday'
+            ? KIND_STYLES.holiday
+            : null
 
   const handleSave = async () => {
     if (!onSave) return
     setErr(null)
-    const edit: AttendanceEditInput =
-      status === 'Leave'
-        ? {
-            status: 'Leave',
-            punchIn: null,
-            punchOut: null,
-            leaveType,
-            notes: notes.trim() || null,
-          }
-        : {
-            status,
-            punchIn: combineDateTime(date, inTime),
-            punchOut: combineDateTime(date, outTime),
-            leaveType: null,
-            notes: notes.trim() || null,
-          }
+    const noPunch = status === 'Leave' || status === 'Holiday'
+    const edit: AttendanceEditInput = noPunch
+      ? {
+          status,
+          punchIn: null,
+          punchOut: null,
+          leaveType: status === 'Leave' ? leaveType : null,
+          notes: notes.trim() || null,
+        }
+      : {
+          status,
+          punchIn: combineDateTime(date, inTime),
+          punchOut: combineDateTime(date, outTime),
+          leaveType: null,
+          notes: notes.trim() || null,
+        }
 
     if (edit.punchIn && edit.punchOut && new Date(edit.punchOut) < new Date(edit.punchIn)) {
       setErr('Punch out cannot be before punch in.')
@@ -172,7 +184,7 @@ export function DateDetails({
             </div>
           )}
 
-          {record && record.status !== 'Leave' && (
+          {record && (record.status === 'Present' || record.status === 'WFH') && (
             <div className="rounded-2xl bg-slate-50/80 px-4">
               <Row label="Status" value={record.status} />
               <Row label="Punch In" value={formatTimeWithSeconds(record.punch_in)} />
@@ -195,6 +207,13 @@ export function DateDetails({
               <Row label="Status" value="Leave" />
               <Row label="Type" value={record.leave_type ?? '--'} />
               {record.notes && <Row label="Notes" value={record.notes} />}
+            </div>
+          )}
+
+          {record && record.status === 'Holiday' && (
+            <div className="rounded-2xl bg-slate-50/80 px-4">
+              <Row label="Status" value="Holiday" />
+              <Row label="Reason" value={record.notes || '--'} />
             </div>
           )}
 
@@ -225,10 +244,10 @@ export function DateDetails({
 
           {/* Actions */}
           {!future && !locked && (
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {onSave && (
                 <button
-                  className="btn-primary flex-1"
+                  className="btn-primary basis-full"
                   onClick={() => setEditing(true)}
                   disabled={busy}
                 >
@@ -238,12 +257,25 @@ export function DateDetails({
               )}
               {onMarkLeave && (
                 <button
-                  className="btn-secondary"
+                  className="btn-secondary flex-1"
                   onClick={() => onMarkLeave(date)}
                   disabled={busy}
                 >
                   <Plane className="h-4 w-4" />
                   Leave
+                </button>
+              )}
+              {onSave && (
+                <button
+                  className="btn-secondary flex-1"
+                  onClick={() => {
+                    setStatus('Holiday')
+                    setEditing(true)
+                  }}
+                  disabled={busy}
+                >
+                  <Palmtree className="h-4 w-4" />
+                  Holiday
                 </button>
               )}
               {onClear && record && (
@@ -282,12 +314,13 @@ export function DateDetails({
         <div className="space-y-4 pb-2">
           <div>
             <p className="label">Status</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {(
                 [
                   ['Present', 'Office', Building2],
                   ['WFH', 'WFH', Laptop],
                   ['Leave', 'Leave', Plane],
+                  ['Holiday', 'Holiday', Palmtree],
                 ] as const
               ).map(([val, lbl, Icon]) => (
                 <button
@@ -307,7 +340,7 @@ export function DateDetails({
             </div>
           </div>
 
-          {status !== 'Leave' ? (
+          {status === 'Present' || status === 'WFH' ? (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label" htmlFor="edit-in">Punch In</label>
@@ -330,7 +363,7 @@ export function DateDetails({
                 />
               </div>
             </div>
-          ) : (
+          ) : status === 'Leave' ? (
             <div>
               <p className="label">Leave Type</p>
               <div className="grid grid-cols-2 gap-2">
@@ -350,20 +383,26 @@ export function DateDetails({
                 ))}
               </div>
             </div>
+          ) : (
+            <p className="rounded-xl bg-[#800000]/5 px-3.5 py-2.5 text-sm text-slate-500">
+              This day will be marked as a <span className="font-semibold text-[#800000]">Holiday</span> — add the reason below.
+            </p>
           )}
 
           <div>
-            <label className="label" htmlFor="edit-notes">Notes</label>
+            <label className="label" htmlFor="edit-notes">
+              {status === 'Holiday' ? 'Reason' : 'Notes'}
+            </label>
             <textarea
               id="edit-notes"
               className="input min-h-[64px] resize-none"
-              placeholder="Optional"
+              placeholder={status === 'Holiday' ? 'e.g. Diwali, Company offsite' : 'Optional'}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
 
-          {status !== 'Leave' && (
+          {(status === 'Present' || status === 'WFH') && (
             <p className="text-xs text-slate-400">
               Leave a time empty to clear it. Working hours are calculated automatically.
             </p>

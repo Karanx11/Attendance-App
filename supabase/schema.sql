@@ -29,7 +29,7 @@ create table if not exists public.attendance (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null references auth.users (id) on delete cascade,
   attendance_date date not null,
-  status          text not null check (status in ('Present', 'WFH', 'Leave')),
+  status          text not null check (status in ('Present', 'WFH', 'Leave', 'Holiday')),
   punch_in        timestamptz,
   punch_out       timestamptz,
   total_minutes   integer,

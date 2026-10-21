@@ -5,6 +5,7 @@ import {
   Clock,
   LogIn,
   LogOut,
+  Palmtree,
   Pencil,
   Plane,
   Laptop,
@@ -43,6 +44,8 @@ export function AttendanceCard({
   onUpdateTimes,
 }: Props) {
   const isLeave = record?.status === 'Leave'
+  const isHoliday = record?.status === 'Holiday'
+  const isOff = isLeave || isHoliday
   const punchedIn = Boolean(record?.punch_in)
   const punchedOut = Boolean(record?.punch_out)
   const mode: 'Present' | 'WFH' = record?.status === 'WFH' ? 'WFH' : 'Present'
@@ -134,22 +137,29 @@ export function AttendanceCard({
         <div>
           <h2 className="text-lg font-bold text-slate-800">Today's Attendance</h2>
           <p className="text-sm text-slate-500">
-            {isLeave
-              ? 'On leave today'
-              : punchedOut
-                ? 'Day complete'
-                : punchedIn
-                  ? 'Currently working'
-                  : 'Not marked yet'}
+            {isHoliday
+              ? 'Holiday today'
+              : isLeave
+                ? 'On leave today'
+                : punchedOut
+                  ? 'Day complete'
+                  : punchedIn
+                    ? 'Currently working'
+                    : 'Not marked yet'}
           </p>
         </div>
-        {record && !isLeave && (
+        {record && !isOff && (
           <span
             className={`rounded-full px-3 py-1 text-xs font-bold text-white ${
               mode === 'WFH' ? 'bg-brand-500' : 'bg-green-500'
             }`}
           >
             {record.status}
+          </span>
+        )}
+        {isHoliday && (
+          <span className="rounded-full bg-[#800000] px-3 py-1 text-xs font-bold text-white">
+            Holiday
           </span>
         )}
         {isLeave && (
@@ -159,7 +169,17 @@ export function AttendanceCard({
         )}
       </div>
 
-      {isLeave ? (
+      {isHoliday ? (
+        <div className="rounded-2xl bg-[#800000]/5 px-4 py-6 text-center">
+          <Palmtree className="mx-auto mb-2 h-8 w-8 text-[#800000]" />
+          <p className="text-sm font-semibold text-slate-700">
+            Today is a holiday.
+          </p>
+          {record?.notes && (
+            <p className="mt-1 text-sm text-slate-500">{record.notes}</p>
+          )}
+        </div>
+      ) : isLeave ? (
         <div className="rounded-2xl bg-[#800000]/5 px-4 py-6 text-center">
           <Plane className="mx-auto mb-2 h-8 w-8 text-[#800000]" />
           <p className="text-sm font-semibold text-slate-700">
@@ -279,7 +299,7 @@ export function AttendanceCard({
         </>
       )}
 
-      {!punchedIn && !isLeave && (
+      {!punchedIn && !isOff && (
         <button
           onClick={onMarkLeave}
           disabled={busy}
