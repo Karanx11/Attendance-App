@@ -309,8 +309,8 @@ export async function saveAttendanceEdit(
     notes: edit.notes,
   }
 
-  if (edit.status === 'Leave') {
-    row.leave_type = edit.leaveType
+  if (edit.status === 'Leave' || edit.status === 'Holiday') {
+    row.leave_type = edit.status === 'Leave' ? edit.leaveType : null
     row.punch_in = null
     row.punch_out = null
     row.total_minutes = null

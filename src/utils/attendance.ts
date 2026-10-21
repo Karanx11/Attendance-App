@@ -56,6 +56,7 @@ export function resolveDayKind(
     if (record.status === 'Present') return 'present'
     if (record.status === 'WFH') return 'wfh'
     if (record.status === 'Leave') return 'leave'
+    if (record.status === 'Holiday') return 'holiday'
   }
   if (holiday) return 'holiday'
 
@@ -117,9 +118,12 @@ export function computeStats(
   for (const key of keys) {
     const record = recordsByDate.get(key)
     const working = isWorkingDay(key, holidays, workingDays)
+    // A day marked as Holiday is treated like a non-working day: it doesn't
+    // count toward working days or absences.
+    const isHolidayRecord = record?.status === 'Holiday'
     // Days before joining have no obligation — don't count them as working
     // days or as absences.
-    const countable = working && !isBeforeJoining(key)
+    const countable = working && !isBeforeJoining(key) && !isHolidayRecord
     if (countable && !isFutureKey(key)) workingDays_++
 
     if (record) {

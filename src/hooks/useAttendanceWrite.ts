@@ -37,11 +37,11 @@ function buildRecord(
   edit: AttendanceEditInput,
   existing: AttendanceRecord | null
 ): AttendanceRecord {
-  const isLeave = edit.status === 'Leave'
-  const punchIn = isLeave ? null : edit.punchIn
-  const punchOut = isLeave ? null : edit.punchOut
+  const noPunch = edit.status === 'Leave' || edit.status === 'Holiday'
+  const punchIn = noPunch ? null : edit.punchIn
+  const punchOut = noPunch ? null : edit.punchOut
   const total =
-    !isLeave && punchIn && punchOut ? calcTotalMinutes(punchIn, punchOut) : null
+    !noPunch && punchIn && punchOut ? calcTotalMinutes(punchIn, punchOut) : null
   return {
     id: existing?.id ?? `local-${date}`,
     user_id: userId,
@@ -50,7 +50,7 @@ function buildRecord(
     punch_in: punchIn,
     punch_out: punchOut,
     total_minutes: total,
-    leave_type: isLeave ? edit.leaveType : null,
+    leave_type: edit.status === 'Leave' ? edit.leaveType : null,
     notes: edit.notes,
     created_at: existing?.created_at ?? new Date().toISOString(),
     updated_at: new Date().toISOString(),
